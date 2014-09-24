@@ -50,7 +50,7 @@ func main() {
 	var nodeList []*DHTnode 
 	var firstNode *DHTnode
 
-	wantedNodes := 50
+	wantedNodes := 10
 
 	for i := 0; i < wantedNodes; i++ {
 	//for {
@@ -89,7 +89,7 @@ func main() {
 	}
 
 
-	firstNode.initFingerTables()
+	//firstNode.updateFingerTables()
 
 	firstNode.printRing()
 	
@@ -106,7 +106,7 @@ func main() {
 
 }
 
-func (self *DHTnode) initFingerTables() {
+func (self *DHTnode) updateFingerTables() {
 
 	/*
 	//should be possible to use already made finger tables instead of making each table from scratch
@@ -404,6 +404,8 @@ func (self *DHTnode) addToRing(node *DHTnode){
 
 		}
   	}
+
+  	self.updateFingerTables()
 }
 
 

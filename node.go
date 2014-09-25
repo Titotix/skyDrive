@@ -3,7 +3,6 @@ package main
 import (
     "encoding/hex"
     "strconv"
-    "fmt"
 )
 
 type DHTnode struct {
@@ -138,8 +137,6 @@ func makeDHTNode(nodeIp string, nodePort string, joinViaIp string, joinViaPort s
 
     return node
 }
-
- 
 
 func (self *DHTnode) addToRing(node *DHTnode){
 

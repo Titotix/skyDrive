@@ -25,4 +25,46 @@ func ( self *DHTnode ) lookup(key string) *DHTnode {
 	return nil
 }
 
+func (self *DHTnode) fingerLookup(hashedKey string) *DHTnode {
+
+	targetNodeId := ""
+	responsibleNode := self
+	key := []byte(hashedKey)
+	ownId := []byte(self.nodeId)
+	nextNodeId := []byte(self.successor.nodeId)
+	if (between(ownId, nextNodeId, key)) {  // starting node is responsible for key
+		
+		return self
+
+	} else { 
+
+		// deciding finger to use by iteration, replace with better algoritm???
+		fingerFound := false
+		i := 0
+		for (!fingerFound && i < 160) {
+			fingerA := []byte(self.fingers[i].nodeId)
+			fingerB := []byte(self.fingers[i+1].nodeId)
+			if (between(fingerA, fingerB, key)) {
+				targetNodeId = self.fingers[i].nodeId
+				fingerFound = true
+			} else {
+				i++
+			}
+		}
+		if (!fingerFound) {
+			targetNodeId = self.fingers[159].nodeId
+		}
+
+		// traversing ring clockwise instead of send request directly via IP of node
+		for (!(self.successor.nodeId == targetNodeId)) {
+			self = self.successor
+		}
+		
+		// recursive request to closest node pointed to by finger
+		responsibleNode = self.fingerLookup(hashedKey)
+		return responsibleNode
+	}
+	
+}
+
 

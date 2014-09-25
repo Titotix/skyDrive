@@ -120,11 +120,12 @@ func main() {
 func (self *DHTnode) updateIncorrectFingers() {
 
 	start := self
+	newNode := self
 
 	for start != self.successor { 
 		for i:= 0; i < 160; i++ {
 
-			if self.fingers[i].key >= self.nodeId {
+			if self.fingers[i].key >= newNode.nodeId {
 
 				responsibleNode := self.ringLookup(self.fingers[i].key)		
 				self.fingers[i].nodeId = responsibleNode.nodeId[:len(responsibleNode.nodeId)]		

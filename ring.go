@@ -50,7 +50,7 @@ func main() {
 	var nodeList []*DHTnode 
 	var firstNode *DHTnode
 
-	wantedNodes := 10
+	wantedNodes := 3
 
 	for i := 0; i < wantedNodes; i++ {
 	//for {
@@ -68,13 +68,17 @@ func main() {
 			fmt.Fprintln(os.Stderr, "reading standard input:", err)
 		}
 		*/
-		port := (i*10) + 1111
+
+
+		//port := (i*10) + 1111
+		port := (i*1) + 1111
 		newNode := createNode(port)
 		nodeList = append(nodeList, newNode)
 		nodesCreated := len(nodeList)
 		if nodesCreated == 1 {
 			firstNode = newNode
 		}
+
 		//fmt.Printf("\nNodes created: %d\n", nodesCreated)
 		//for i := 0; i < (nodesCreated); i++ {
 		//	fmt.Printf("Node %d: %s\n", i+1, nodeList[i].nodeId)
@@ -83,7 +87,13 @@ func main() {
 		if nodesCreated > 1 {
 
 			firstNode.addToRing(newNode)
-
+			
+			if nodesCreated == 2 {	
+				newNode.updateAllFingerTables()
+			} else {
+				newNode.updateIncorrectFingers()
+			}
+			
 		}
 		
 	}
@@ -101,18 +111,32 @@ func main() {
 	testKey := scanner.Text()
 	testHash := sha1hash(testKey)
 	fmt.Printf("Key hashed to: %s\n\n", testHash)
-	//fmt.Printf("ringLookup, nodeId: %s\n", firstNode.ringLookup(testHash).nodeId)
 	fmt.Printf("ringLookup, nodeId: %s\n", firstNode.fingerLookup(testHash).nodeId)
 
 }
 
-func (self *DHTnode) updateFingerTables() {
 
-	/*
-	//should be possible to use already made finger tables instead of making each table from scratch
-	// in this case when ring is made first and joins can not join at any time, +1 on all fingers would be enough
-	// but not good enough for objective 1
-	*/
+
+func (self *DHTnode) updateIncorrectFingers() {
+
+	start := self
+
+	for start != self.successor { 
+		for i:= 0; i < 160; i++ {
+
+			if self.fingers[i].key >= self.nodeId {
+
+				responsibleNode := self.ringLookup(self.fingers[i].key)		
+				self.fingers[i].nodeId = responsibleNode.nodeId[:len(responsibleNode.nodeId)]		
+			
+			}
+		}
+		self = self.successor
+	}
+}
+
+
+func (self *DHTnode) updateAllFingerTables() {  // updates all fingers in fingerTables of all nodes, starts with self
 
 	start := self
 
@@ -405,7 +429,7 @@ func (self *DHTnode) addToRing(node *DHTnode){
 		}
   	}
 
-  	self.updateFingerTables()
+  	//self.updateAllFingerTables()
 }
 
 

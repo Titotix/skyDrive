@@ -27,7 +27,7 @@ func ( self *DHTnode ) lookup(key string) *DHTnode {
 
 func (self *DHTnode) fingerLookup(key string) *DHTnode {
 
-	fmt.Printf("current node: %s\n", self.nodeId)
+	fmt.Printf("checking node: %s\n", self.nodeId)
 
 	targetNodeId := ""
 	responsibleNode := self

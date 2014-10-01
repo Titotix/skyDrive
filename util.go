@@ -85,8 +85,13 @@ func calcFinger(n []byte, k int, m int) (string) {
 	resultBytes := result.Bytes()
 	resultHex := fmt.Sprintf("%x", resultBytes)
 
+	//fmt.Printf("calcFinger, Bytes %d\n", resultBytes)
+	//fmt.Printf("calcFinger, Hex %s\n", resultHex)
+
 	//return resultHex, resultBytes
 	return resultHex
 }
+
+
 
 

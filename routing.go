@@ -25,30 +25,30 @@ func ( self *DHTnode ) lookup(key string) *DHTnode {
 	return nil
 }
 
-func (self *DHTnode) fingerLookup(hashedKey string) *DHTnode {
+func (self *DHTnode) fingerLookup(key string) *DHTnode {
+
+	fmt.Printf("current node: %s\n", self.nodeId)
 
 	targetNodeId := ""
 	responsibleNode := self
-	key := []byte(hashedKey)
-	ownId := []byte(self.nodeId)
-	nextNodeId := []byte(self.successor.nodeId)
-	if (between(ownId, nextNodeId, key)) {  // starting node is responsible for key
-		
-		return self
 
+	if ( between([]byte(self.predecessor.nodeId), []byte(self.nodeId), []byte(key)) || self.nodeId == key ) {  // self is responsible for key
+		return self
+	
 	} else { 
 
 		// deciding finger to use by iteration, replace with better algoritm???
 		fingerFound := false
 		i := 0
-		for (!fingerFound && i < 160) {
-			fingerA := []byte(self.fingers[i].nodeId)
-			fingerB := []byte(self.fingers[i+1].nodeId)
-			if (between(fingerA, fingerB, key)) {
+		for ( (!(fingerFound == true)) && (i < 159) ) {
+
+			if between( []byte(self.fingers[i].key), []byte(self.fingers[i+1].key), []byte(key)) {
+				
 				targetNodeId = self.fingers[i].nodeId
 				fingerFound = true
+				
 			} else {
-				i++
+				i = i + 1
 			}
 		}
 		if (!fingerFound) {
@@ -61,10 +61,30 @@ func (self *DHTnode) fingerLookup(hashedKey string) *DHTnode {
 		}
 		
 		// recursive request to closest node pointed to by finger
-		responsibleNode = self.fingerLookup(hashedKey)
+		responsibleNode = self.successor.fingerLookup(key)
 		return responsibleNode
 	}
 	
+}
+
+
+func (self *DHTnode) ringLookup(hashedKey string) *DHTnode{
+	
+	nodeFound := false
+    key := []byte(hashedKey)
+
+	for nodeFound == false { 
+		
+		id1 := []byte(self.nodeId)
+    	id2 := []byte(self.successors[0].nodeId)
+		
+    	if (between(id1, id2, key)) {
+      		nodeFound = true
+    	} else {
+	      	self = self.successor
+    	}
+    }
+    return self.successor
 }
 
 

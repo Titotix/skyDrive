@@ -40,8 +40,8 @@ func (self *DHTnode) updateIncorrectFingers() {
         for i:= 0; i < 160; i++ {
 
             if self.fingers[i].key >= newNode.nodeId {
-
-                responsibleNode := self.ringLookup(self.fingers[i].key)     
+                predecessorNode := self.ringLookup(self.fingers[i].key)
+                responsibleNode := predecessorNode.successor        
                 self.fingers[i].nodeId = responsibleNode.nodeId[:len(responsibleNode.nodeId)]       
             
             }
@@ -69,29 +69,6 @@ func (self *DHTnode) updateAllFingerTables() {  // updates all fingers in finger
         self.fingers[i].nodeId = responsibleNode.nodeId[:len(responsibleNode.nodeId)]       
     }
 
-}
-
-
-
-
-
-func (self *DHTnode) ringLookup(hashedKey string) *DHTnode{
-    
-    nodeFound := false
-    key := []byte(hashedKey)
-
-    for nodeFound == false { 
-        
-        id1 := []byte(self.nodeId)
-        id2 := []byte(self.successors[0].nodeId)
-        
-        if (between(id1, id2, key)) {
-            nodeFound = true
-        } else {
-            self = self.successor
-        }
-    }
-    return self
 }
 
 

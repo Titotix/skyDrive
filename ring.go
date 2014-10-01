@@ -11,9 +11,10 @@ func main() {
 	var nodeList []*DHTnode 
 	var firstNode *DHTnode
 
-	wantedNodes := 10
+	wantedNodes := 100
 
 	for i := 0; i < wantedNodes; i++ {
+
 		port := (i*1) + 1111
 		newNode := createNode(port)
 		nodeList = append(nodeList, newNode)
@@ -27,14 +28,16 @@ func main() {
 			firstNode.addToRing(newNode)
 			
 			if nodesCreated == 2 {	
-				newNode.updateAllFingerTables()
+				//newNode.updateAllFingerTables()
 			} else {
-				newNode.updateIncorrectFingers()
+				//newNode.updateIncorrectFingers()
 			}
 			
 		}
 		
 	}
+
+	firstNode.updateAllFingerTables()
 
 	firstNode.printRing()
 	
@@ -46,6 +49,6 @@ func main() {
 	testKey := scanner.Text()
 	testHash := sha1hash(testKey)
 	fmt.Printf("Key hashed to: %s\n\n", testHash)
-	fmt.Printf("ringLookup, nodeId: %s\n", firstNode.fingerLookup(testHash).nodeId)
-
+	fmt.Printf("\nlookup result : %s\n", firstNode.fingerLookup(testHash).nodeId)
+	
 }

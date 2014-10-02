@@ -1,4 +1,4 @@
-packet main
+package main
 
 type Msg struct {
 	//Key string

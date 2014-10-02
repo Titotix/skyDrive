@@ -43,7 +43,7 @@ func sendMessage(msg *Msg, port string) {
 
 	url := "localhost" + ":" + port
 
-	fmt.Printf("connecting to url (ip:port): %s\n", url)
+	fmt.Printf("\nConnecting to url (ip:port): %s\n", url)
 
 	//udpAddr, _ := net.ResolveUDPAddr("udp", "localhost:1112")
 	udpAddr, _ := net.ResolveUDPAddr("udp", url)
@@ -92,14 +92,14 @@ func runListener(node *DHTnode) {
 		msg := Msg{}
 		//err := json.Unmarshal(dec, &msg)
 		err := dec.Decode(&msg)
-		fmt.Printf("\nErrors when receiving : ")
+		fmt.Printf("\n\nErrors when receiving : ")
 		fmt.Println(err)
 		//dec.Decode(&msg)
 		//fmt.Println(dec)
 		
 		fmt.Printf("Origin: %s\n", msg.Origin)
-		fmt.Printf("To: %s\n", msg.To)
 		fmt.Printf("From: %s\n", msg.From)
+		fmt.Printf("To: %s\n", msg.To)
 		fmt.Printf("Action: %s\n", msg.Action)
 		fmt.Printf("Data: %s\n", msg.Data)
 		// we got a message

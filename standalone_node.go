@@ -43,11 +43,11 @@ func main() {
 	}
 	remoteNodePort := scanner.Text()
 	
-	msg := createMessage("0", "1", "2", "a", "b")
+	msg := createMessage(thisNodePort, thisNodePort, remoteNodePort, "a", "b")
 	sendMessage(msg, remoteNodePort)
 
 	fmt.Printf("\n\n")
-	fmt.Printf("thisNode port: %s\n", thisNodePort)
+	//fmt.Printf("thisNode port: %s\n", thisNodePort)
 
 	
 }

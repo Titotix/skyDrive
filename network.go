@@ -22,9 +22,9 @@ func startNodeSender(node *DHTnode) bool {
 	//data := "hhh"
 	//fmt.Printf("dstAdress: %s\n", dst)
 	//fmt.Printf("content: %s\n", text)
-	msg := &Msg{Dst:"1",Data:"2",Mess:"3"}
+	msg := &Msg{From:"1", To:"2", Data:"a",Mess:"b"}
 	send(msg, node)
-	msg = &Msg{Dst:"4",Data:"5",Mess:"6"}
+	msg = &Msg{From:"3", To:"4", Data:"c",Mess:"d"}
 	send(msg, node)
 	return true
 }
@@ -82,7 +82,8 @@ func runListener(node *DHTnode) {
 		fmt.Println(err)
 		//dec.Decode(&msg)
 		//fmt.Println(dec)
-		fmt.Printf("Dst: %s\n", msg.Dst)
+		fmt.Printf("From: %s\n", msg.From)
+		fmt.Printf("To: %s\n", msg.To)
 		fmt.Printf("Data: %s\n", msg.Data)
 		fmt.Printf("Mess: %s\n", msg.Mess)
 		// we got a message

@@ -43,6 +43,8 @@ func main() {
 	}
 	remoteNodePort := scanner.Text()
 	
+	msg := createMessage("1", "2", "a", "b")
+	sendMessage(msg, remoteNodePort)
 
 	fmt.Printf("\n\n")
 	fmt.Printf("remoteNode port:%s\n", remoteNodePort)

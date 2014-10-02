@@ -16,6 +16,7 @@ func startNodeListener(node *DHTnode) bool {
 	return true
 }
 
+/*
 func startNodeSender(node *DHTnode) bool {
 	//dst := node.successorIp + ":" + node.successorPort
 	//text := "hej"
@@ -28,11 +29,22 @@ func startNodeSender(node *DHTnode) bool {
 	send(msg, node)
 	return true
 }
+*/
 
-func send(msg *Msg, node *DHTnode) {
+func createMessage(to string, from string, data string, mess string) *Msg {
+
+	msg := &Msg{From:"1", To:"2", Data:"a",Mess:"b"}
+	return msg
+}
+
+func sendMessage(msg *Msg, port string) {
 
 	//udpAddr, err := net.ResolveUDPAddr("udp", dhtMsg.Dst)
-	udpAddr, _ := net.ResolveUDPAddr("udp", "localhost:1111")
+
+	url := "localhost" + ":" + "port"
+
+	//udpAddr, _ := net.ResolveUDPAddr("udp", "localhost:1111")
+	udpAddr, _ := net.ResolveUDPAddr("udp", url)
 
 	//conn, err := net.DialUDP("udp", nil, udpAddr)
 	conn, _ := net.DialUDP("udp", nil, udpAddr)

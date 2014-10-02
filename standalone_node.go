@@ -17,7 +17,7 @@ import (
 
 func main() {
 	
-	fmt.Printf("New node is starting...\n")
+	fmt.Printf("\nNew node is starting...\n")
 
 	fmt.Printf("Port for this node: ")
 	scanner := bufio.NewScanner(os.Stdin)
@@ -35,17 +35,18 @@ func main() {
 	thisNode.printRing()
 	
 	startNodeListener(thisNode)
-
-	fmt.Printf("Connect to node on port: ")
+	fmt.Printf("\nListening on port %s\n", thisNode.nodePort)
+	fmt.Printf("\nConnect to remote node on port: ")
 	scanner = bufio.NewScanner(os.Stdin)
 	for scanner.Scan() {
 		{break}
 	}
 	remoteNodePort := scanner.Text()
+	
 
 	fmt.Printf("\n\n")
-	fmt.Printf("Remote port:%s\n", remoteNodePort)
-	fmt.Printf("This node port: %s\n", thisNodePort)
+	fmt.Printf("remoteNode port:%s\n", remoteNodePort)
+	fmt.Printf("thisNode port: %s\n", thisNodePort)
 
 	// sendMessage(join, localhost, remoteNodePort)
 

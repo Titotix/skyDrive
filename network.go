@@ -48,9 +48,9 @@ func send(msg *Msg, node *DHTnode) {
 
 func runListener(node *DHTnode) {
 
-	fmt.Println("\nListener started")
+	//fmt.Println("\nListener started")
 	port, _ := strconv.Atoi(node.nodePort)
-	fmt.Printf("Listening on port %d\n", port)
+	//fmt.Printf("Listening on port %d\n", port)
 	addr := net.UDPAddr{
         Port: port,
         IP: net.ParseIP("localhost"),
@@ -71,10 +71,10 @@ func runListener(node *DHTnode) {
 
 	defer conn.Close()
 	dec := json.NewDecoder(conn)	
-	fmt.Println("Decoding started\n")
+	//fmt.Println("Decoding started\n")
 	for i := 0; i < 2; i++ {
 	//for {
-		fmt.Println("\nWaiting for message")
+		//fmt.Println("\nWaiting for message")
 		msg := Msg{}
 		//err := json.Unmarshal(dec, &msg)
 		err := dec.Decode(&msg)

@@ -1,12 +1,14 @@
 package main
 
 import (
-	"encoding/hex"
-	"math/big"
-	"bytes"
-	"crypto/sha1"
+	"fmt"
+	"strconv"
 	"net"
+	"encoding/hex"
 	"encoding/json"
+	//"math/big"
+	//"bytes"
+	//"crypto/sha1"
 )
 
 func startNodeListener(node *DHTnode) bool {

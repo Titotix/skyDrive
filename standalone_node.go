@@ -47,11 +47,7 @@ func main() {
 	sendMessage(msg, remoteNodePort)
 
 	fmt.Printf("\n\n")
-	fmt.Printf("remoteNode port:%s\n", remoteNodePort)
 	fmt.Printf("thisNode port: %s\n", thisNodePort)
-
-	// sendMessage(join, localhost, remoteNodePort)
-
 
 	
 }

@@ -41,9 +41,11 @@ func sendMessage(msg *Msg, port string) {
 
 	//udpAddr, err := net.ResolveUDPAddr("udp", dhtMsg.Dst)
 
-	url := "localhost" + ":" + "port"
+	url := "localhost" + ":" + port
 
-	//udpAddr, _ := net.ResolveUDPAddr("udp", "localhost:1111")
+	fmt.Printf("connecting to url (ip:port): %s\n", url)
+
+	//udpAddr, _ := net.ResolveUDPAddr("udp", "localhost:1112")
 	udpAddr, _ := net.ResolveUDPAddr("udp", url)
 
 	//conn, err := net.DialUDP("udp", nil, udpAddr)
@@ -90,7 +92,7 @@ func runListener(node *DHTnode) {
 		msg := Msg{}
 		//err := json.Unmarshal(dec, &msg)
 		err := dec.Decode(&msg)
-		fmt.Printf("Errors when receiving : ")
+		fmt.Printf("\nErrors when receiving : ")
 		fmt.Println(err)
 		//dec.Decode(&msg)
 		//fmt.Println(dec)

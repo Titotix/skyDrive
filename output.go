@@ -7,7 +7,7 @@ import (
 
 func printNode(node *DHTnode) {
 
-  fmt.Printf("node id          : %s\n", node.nodeId)
+  fmt.Printf("node id: %s\n", node.nodeId)
 
   /*
   fmt.Printf("predecessor1 id: %s\n", node.predecessors[1].nodeId)

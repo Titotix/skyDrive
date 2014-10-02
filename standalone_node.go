@@ -43,8 +43,9 @@ func main() {
 	}
 	remoteNodePort := scanner.Text()
 
-	fmt.Printf(remoteNodePort)
-	fmt.Printf(thisNodePort)
+	fmt.Printf("\n\n")
+	fmt.Printf("Remote port:%s\n", remoteNodePort)
+	fmt.Printf("This node port: %s\n", thisNodePort)
 
 	// sendMessage(join, localhost, remoteNodePort)
 

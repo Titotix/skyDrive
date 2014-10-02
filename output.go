@@ -71,14 +71,13 @@ func printNode(node *DHTnode) {
 func (self *DHTnode) printRing(){
   fmt.Println("\nNodes in ring:")
   start := self
-    
-    printNode(self)
-
+  printNode(self)
+  
+  if (self.successor != nil) {
     self = self.successor
     for(self != start){
-
       printNode(self)
-
       self = self.successor
     }
- }
+  } 
+}

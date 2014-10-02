@@ -31,9 +31,9 @@ func startNodeSender(node *DHTnode) bool {
 }
 */
 
-func createMessage(to string, from string, data string, mess string) *Msg {
+func createMessage(origin string, from string, to string, action string, data string) *Msg {
 
-	msg := &Msg{From:"1", To:"2", Data:"a",Mess:"b"}
+	msg := &Msg{Origin: origin, From: from, To: to, Data: data, Mess: mess}
 	return msg
 }
 
@@ -96,10 +96,12 @@ func runListener(node *DHTnode) {
 		fmt.Println(err)
 		//dec.Decode(&msg)
 		//fmt.Println(dec)
-		fmt.Printf("From: %s\n", msg.From)
+		
+		fmt.Printf("Origin: %s\n", msg.Origin)
 		fmt.Printf("To: %s\n", msg.To)
+		fmt.Printf("From: %s\n", msg.From)
+		fmt.Printf("Action: %s\n", msg.Action)
 		fmt.Printf("Data: %s\n", msg.Data)
-		fmt.Printf("Mess: %s\n", msg.Mess)
 		// we got a message
 	}
 	fmt.Println("Listener finished")

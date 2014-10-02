@@ -33,7 +33,7 @@ func startNodeSender(node *DHTnode) bool {
 
 func createMessage(origin string, from string, to string, action string, data string) *Msg {
 
-	msg := &Msg{Origin: origin, From: from, To: to, Data: data, Mess: mess}
+	msg := &Msg{Origin: origin, From: from, To: to, Action: action, Data: data}
 	return msg
 }
 

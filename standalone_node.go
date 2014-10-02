@@ -34,7 +34,7 @@ func main() {
 
 	thisNode.printRing()
 	
-	// start Listener
+	startNodeListener(thisNode)
 
 	fmt.Printf("Connect to node on port: ")
 	scanner = bufio.NewScanner(os.Stdin)

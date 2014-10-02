@@ -48,7 +48,7 @@ func send(msg *Msg, node *DHTnode) {
 
 func runListener(node *DHTnode) {
 
-	fmt.Println("Listener started")
+	fmt.Println("\nListener started")
 	port, _ := strconv.Atoi(node.nodePort)
 	fmt.Printf("Listening on port %d\n", port)
 	addr := net.UDPAddr{

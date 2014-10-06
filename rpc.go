@@ -32,8 +32,8 @@ func (self *DHTnode) callLookup(clientSocket *rpc.Client, arg *ArgLookup) *DHTno
 // nodeTarget is the node where rpc is computed
 func (nodeTarget *DHTnode) lookup(keyTarget string) *DHTnode {
 
+	clientSocket := nodeTarget.connect(nodeTarget.NodeIp, nodeTarget.NodePort)
 	arg := ArgLookup{*nodeTarget, keyTarget}
-	clientSocket := nodeTarget.connect(arg.Node.NodeIp, arg.Node.NodePort)
 	reply := nodeTarget.callLookup(clientSocket, &arg)
 	clientSocket.Close()
 	return reply

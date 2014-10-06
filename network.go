@@ -2,8 +2,12 @@ package main
 
 import (
 	"fmt"
-	"strconv"
+	"log"
 	"net"
+	"net/http"
+	"net/rpc"
+	"strconv"
+
 	//"encoding/hex"
 	"encoding/json"
 	//"math/big"
@@ -11,14 +15,9 @@ import (
 	//"crypto/sha1"
 )
 
-func startNodeListener(node *DHTnode) bool {
-	go runListener(node)
-	return true
-}
-
 /*
 func startNodeSender(node *DHTnode) bool {
-	//dst := node.successorIp + ":" + node.successorPort
+	//dst := node.SuccessorIp + ":" + node.SuccessorPort
 	//text := "hej"
 	//data := "hhh"
 	//fmt.Printf("dstAdress: %s\n", dst)
@@ -58,36 +57,39 @@ func sendMessage(msg *Msg, port string) {
 	fmt.Printf("Bytes sent: %d\n", writeResult)
 }
 
+func (self *DHTnode) startNodeListener() bool {
+	go self.runListener()
+	return true
+}
 
+func (self *DHTnode) runListener() {
 
-func runListener(node *DHTnode) {
-
-	//fmt.Println("\nListener started")
-	port, _ := strconv.Atoi(node.nodePort)
-	//fmt.Printf("Listening on port %d\n", port)
+	fmt.Println("\nListener started")
+	port, _ := strconv.Atoi(self.NodePort)
+	fmt.Printf("Listening on port %d\n", port)
 	addr := net.UDPAddr{
-        Port: port,
-        IP: net.ParseIP("localhost"),
-    }
-    conn, _ := net.ListenUDP("udp", &addr)
+		Port: port,
+		IP:   net.ParseIP("localhost"),
+	}
+	conn, _ := net.ListenUDP("udp", &addr)
 
 	/*
-	bindAddress := node.nodeIp + ":" + node.nodePort
-	fmt.Printf ("Bindadress: %s\n", bindAddress)
-	//udpAddr, err := net.ResolveUDPAddr("udp", bindAddress)
-	udpAddr, _ := net.ResolveUDPAddr("udp", transport.bindAddress)
-	//conn, err := net.ListenUDP("udp", udpAddr)
+		bindAddress := node.nodeIp + ":" + node.NodePort
+		fmt.Printf ("Bindadress: %s\n", bindAddress)
+		//udpAddr, err := net.ResolveUDPAddr("udp", bindAddress)
+		udpAddr, _ := net.ResolveUDPAddr("udp", transport.bindAddress)
+		//conn, err := net.ListenUDP("udp", udpAddr)
 	*/
 
 	//conn, _ := net.ListenUDP("udp", addr)
-	
+
 	//fmt.Println("\nconnection listener established\n\n")
 
 	defer conn.Close()
-	dec := json.NewDecoder(conn)	
+	dec := json.NewDecoder(conn)
 	//fmt.Println("Decoding started\n")
 	for i := 0; i < 2; i++ {
-	//for {
+		//for {
 		//fmt.Println("\nWaiting for message")
 		msg := Msg{}
 		//err := json.Unmarshal(dec, &msg)
@@ -96,7 +98,7 @@ func runListener(node *DHTnode) {
 		fmt.Println(err)
 		//dec.Decode(&msg)
 		//fmt.Println(dec)
-		
+
 		fmt.Printf("Origin: %s\n", msg.Origin)
 		fmt.Printf("From: %s\n", msg.From)
 		fmt.Printf("To: %s\n", msg.To)
@@ -106,16 +108,39 @@ func runListener(node *DHTnode) {
 	}
 	fmt.Println("Listener finished")
 }
+func (self *DHTnode) listenHTTP(port string) {
+	arg := new(DHTnode)
+	rpc.Register(arg)
+	rpc.HandleHTTP()
+	socket, e := net.Listen("tcp", ":"+port)
+	if e != nil {
+		log.Fatal("listen error:", e)
+	}
+	go http.Serve(socket, nil)
+}
 
+// node is going to connect to remote http server (@host, @port)
+func (node *DHTnode) connect(host string, port string) *rpc.Client {
+	client, err := rpc.DialHTTP("tcp", host+":"+port)
+	if err != nil {
+		log.Fatal("dialing:", err)
+	}
+	return client
+}
+
+//Just an abstraction of method connect
+func (node *DHTnode) connectToNode(nodeTarget DHTnode) *rpc.Client {
+	return node.connect(nodeTarget.NodeIp, nodeTarget.NodePort)
+}
 
 /*
 func runNode(node *DHTnode) {
-	fmt.Printf("\nNode %s has started\n", node.nodeId)
+	fmt.Printf("\nNode %s has started\n", node.NodeId)
 	for i :=0; i < 10; i++ {
 		time.Sleep(1000 * time.Millisecond)
 		fmt.Println("Node is running")
 	}
-	
-	fmt.Printf("\nNode %s has finished\n", node.nodeId)
-} 
+
+	fmt.Printf("\nNode %s has finished\n", node.NodeId)
+}
 */

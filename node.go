@@ -1,247 +1,239 @@
 package main
-    
+
 import (
-    "encoding/hex"
-    "strconv"
+	"encoding/hex"
 )
 
 type DHTnode struct {
-    nodeId string
-    nodeIdByte []byte
-    nodeIp string
-    nodePort string
-    storagePath string
-    storageContent string
-    fingers []*Finger
-    predecessor *DHTnode
-    successor *DHTnode
-    predecessors []*NeighbourNode  // larger index number = further away in ring
-    successors []*NeighbourNode    // same as above
-    joinViaIp string
-    joinViaPort string
+	NodeId         string
+	NodeIdByte     []byte
+	NodeIp         string
+	NodePort       string
+	storagePath    string
+	storageContent string
+	Fingers        []*Finger
+	Predecessor    *DHTnode
+	Successor      *DHTnode
+	Predecessors   []*NeighbourNode // larger index number = further away in ring
+	Successors     []*NeighbourNode // same as above
+	joinViaIp      string
+	joinViaPort    string
 }
 
 type NeighbourNode struct {
-	nodeId string
-    nodeIdByte []byte
-    nodeIp string
-    nodePort string
-    //storagePath string
-    //storageContent string
+	NodeId     string
+	NodeIdByte []byte
+	NodeIp     string
+	NodePort   string
+	//storagePath string
+	//storageContent string
 
 }
 
 func (self *DHTnode) updateIncorrectFingers() {
 
-    start := self
-    newNode := self
+	start := self
+	newNode := self
 
-    for start != self.successor { 
-        for i:= 0; i < 160; i++ {
+	for start != self.Successor {
+		for i := 0; i < 160; i++ {
 
-            if self.fingers[i].key >= newNode.nodeId {
-                predecessorNode := self.ringLookup(self.fingers[i].key)
-                responsibleNode := predecessorNode.successor        
-                self.fingers[i].nodeId = responsibleNode.nodeId[:len(responsibleNode.nodeId)]       
-            
-            }
-        }
-        self = self.successor
-    }
+			if self.Fingers[i].key >= newNode.NodeId {
+				PredecessorNode := self.ringLookup(self.Fingers[i].key)
+				responsibleNode := PredecessorNode.Successor
+				self.Fingers[i].NodeId = responsibleNode.NodeId[:len(responsibleNode.NodeId)]
+
+			}
+		}
+		self = self.Successor
+	}
 }
 
+func (self *DHTnode) updateAllFingerTables() { // updates all Fingers in fingerTables of all nodes, starts with self
 
-func (self *DHTnode) updateAllFingerTables() {  // updates all fingers in fingerTables of all nodes, starts with self
+	start := self
 
-    start := self
+	for start != self.Successor {
+		for i := 0; i < 160; i++ {
+			responsibleNode := self.ringLookup(self.Fingers[i].key)
+			self.Fingers[i].NodeId = responsibleNode.NodeId[:len(responsibleNode.NodeId)]
+		}
+		self = self.Successor
+	}
 
-    for start != self.successor { 
-        for i:= 0; i < 160; i++ {
-            responsibleNode := self.ringLookup(self.fingers[i].key)     
-            self.fingers[i].nodeId = responsibleNode.nodeId[:len(responsibleNode.nodeId)]       
-        }
-        self = self.successor
-    }
-
-    // filling finger table for last node before starting node
-    for i:= 0; i < 160; i++ {
-        responsibleNode := self.ringLookup(self.fingers[i].key)     
-        self.fingers[i].nodeId = responsibleNode.nodeId[:len(responsibleNode.nodeId)]       
-    }
+	// filling finger table for last node before starting node
+	for i := 0; i < 160; i++ {
+		responsibleNode := self.ringLookup(self.Fingers[i].key)
+		self.Fingers[i].NodeId = responsibleNode.NodeId[:len(responsibleNode.NodeId)]
+	}
 
 }
 
+func createNode(port string) *DHTnode {
 
-func createNode(port int) *DHTnode{
+	NodeIp := "localhost"
+	NodePort := port
 
-    nodeIp := "localhost"
-    portString := strconv.Itoa(port)
-    nodePort := portString
+	joinViaIp := "localhost"
+	joinViaPort := "1111"
 
-    joinViaIp := "localhost"
-    joinViaPort := "1111"
+	node := makeDHTNode(NodeIp, NodePort, joinViaIp, joinViaPort)
 
-    node := makeDHTNode(nodeIp, nodePort, joinViaIp, joinViaPort)
-
-    return node
+	return node
 }
 
+func makeDHTNode(NodeIp string, NodePort string, joinViaIp string, joinViaPort string) *DHTnode {
 
-func makeDHTNode(nodeIp string, nodePort string, joinViaIp string, joinViaPort string) *DHTnode {
+	NodeIdStr := sha1hash(NodeIp + NodePort)
+	NodeIdByte, _ := hex.DecodeString(NodeIdStr)
 
-    nodeIdStr := sha1hash(nodeIp+nodePort)
-    nodeIdByte, _ := hex.DecodeString(nodeIdStr)
-   
+	node := &DHTnode{NodeIdStr, NodeIdByte, NodeIp, NodePort, "", "", nil, nil, nil, nil, nil, joinViaIp, joinViaPort}
 
-    node := &DHTnode { nodeIdStr, nodeIdByte, nodeIp, nodePort, "", "", nil, nil, nil, nil, nil, joinViaIp, joinViaPort}
-    
-    fingersWanted := 160
-    for i := 0; i < fingersWanted; i++ {
-        fingerNumber := i+1
-        newFingerKey := calcFinger(node.nodeIdByte, fingerNumber, 160)
-        newFinger := &Finger{newFingerKey, "", nil, "", ""}
-        node.fingers = append(node.fingers, newFinger)
-    }
+	FingersWanted := 160
+	for i := 0; i < FingersWanted; i++ {
+		fingerNumber := i + 1
+		newFingerKey := calcFinger(node.NodeIdByte, fingerNumber, 160)
+		newFinger := &Finger{newFingerKey, "", nil, "", ""}
+		node.Fingers = append(node.Fingers, newFinger)
+	}
 
-    newPredecessor0 := &NeighbourNode{"", nil, "", ""}
-    newPredecessor1 := &NeighbourNode{"", nil, "", ""}
-    newSuccessor0 := &NeighbourNode{"", nil, "", ""}
-    newSuccessor1 := &NeighbourNode{"", nil, "", ""}
-    node.predecessors = append(node.predecessors, newPredecessor0)
-    node.predecessors = append(node.predecessors, newPredecessor1)
-    node.successors = append(node.successors, newSuccessor0)
-    node.successors = append(node.successors, newSuccessor1)
+	newPredecessor0 := &NeighbourNode{"", nil, "", ""}
+	newPredecessor1 := &NeighbourNode{"", nil, "", ""}
+	newSuccessor0 := &NeighbourNode{"", nil, "", ""}
+	newSuccessor1 := &NeighbourNode{"", nil, "", ""}
+	node.Predecessors = append(node.Predecessors, newPredecessor0)
+	node.Predecessors = append(node.Predecessors, newPredecessor1)
+	node.Successors = append(node.Successors, newSuccessor0)
+	node.Successors = append(node.Successors, newSuccessor1)
 
-    return node
+	return node
 }
 
-func (self *DHTnode) addToRing(node *DHTnode){
+func (self *DHTnode) addToRing(node *DHTnode) {
 
-    /*
-    // instead of traverings all nodes from self until finding point of insertion, 
-    //fingers of existing nodes should be used
-    */
+	/*
+	   // instead of traverings all nodes from self until finding point of insertion,
+	   //Fingers of existing nodes should be used
+	*/
 
-    if self.successor == nil {  // new node connects to a single node, forming a ring of two nodes
+	if self.Successor == nil { // new node connects to a single node, forming a ring of two nodes
 
-        self.successor = node
-        node.predecessor = self
-        self.successors[0].nodeId = node.nodeId[:len(node.nodeId)]
-        self.successors[0].nodeIp = node.nodeIp[:len(node.nodeIp)] 
-        self.successors[0].nodePort = node.nodePort[:len(node.nodePort)] 
-        self.successors[1].nodeId = self.nodeId[:len(self.nodeId)]
-        self.successors[1].nodeIp = self.nodeIp[:len(self.nodeIp)]
-        self.successors[1].nodePort = self.nodePort[:len(self.nodePort)]
-        node.predecessors[0].nodeId = self.nodeId[:len(self.nodeId)]
-        node.predecessors[0].nodeIp = self.nodeIp[:len(self.nodeIp)] 
-        node.predecessors[0].nodePort = self.nodePort[:len(self.nodePort)] 
-        node.predecessors[1].nodeId = node.nodeId[:len(node.nodeId)]
-        node.predecessors[1].nodeIp = node.nodeIp[:len(node.nodeIp)]
-        node.predecessors[1].nodePort = node.nodePort[:len(node.nodePort)]
+		self.Successor = node
+		node.Predecessor = self
+		self.Successors[0].NodeId = node.NodeId[:len(node.NodeId)]
+		self.Successors[0].NodeIp = node.NodeIp[:len(node.NodeIp)]
+		self.Successors[0].NodePort = node.NodePort[:len(node.NodePort)]
+		self.Successors[1].NodeId = self.NodeId[:len(self.NodeId)]
+		self.Successors[1].NodeIp = self.NodeIp[:len(self.NodeIp)]
+		self.Successors[1].NodePort = self.NodePort[:len(self.NodePort)]
+		node.Predecessors[0].NodeId = self.NodeId[:len(self.NodeId)]
+		node.Predecessors[0].NodeIp = self.NodeIp[:len(self.NodeIp)]
+		node.Predecessors[0].NodePort = self.NodePort[:len(self.NodePort)]
+		node.Predecessors[1].NodeId = node.NodeId[:len(node.NodeId)]
+		node.Predecessors[1].NodeIp = node.NodeIp[:len(node.NodeIp)]
+		node.Predecessors[1].NodePort = node.NodePort[:len(node.NodePort)]
 
-        node.successor = self
-        self.predecessor = node
-        node.successors[0].nodeId = self.nodeId[:len(self.nodeId)]
-        node.successors[0].nodeIp = self.nodeIp[:len(self.nodeIp)] 
-        node.successors[0].nodePort = self.nodePort[:len(self.nodePort)] 
-        node.successors[1].nodeId = node.nodeId[:len(node.nodeId)]
-        node.successors[1].nodeIp = node.nodeIp[:len(node.nodeIp)]
-        node.successors[1].nodePort = node.nodePort[:len(node.nodePort)]
-        self.predecessors[0].nodeId = node.nodeId[:len(node.nodeId)]
-        self.predecessors[0].nodeIp = node.nodeIp[:len(node.nodeIp)] 
-        self.predecessors[0].nodePort = node.nodePort[:len(node.nodePort)] 
-        self.predecessors[1].nodeId = self.nodeId[:len(self.nodeId)]
-        self.predecessors[1].nodeIp = self.nodeIp[:len(self.nodeIp)] 
-        self.predecessors[1].nodePort = self.nodePort[:len(self.nodePort)]  
+		node.Successor = self
+		self.Predecessor = node
+		node.Successors[0].NodeId = self.NodeId[:len(self.NodeId)]
+		node.Successors[0].NodeIp = self.NodeIp[:len(self.NodeIp)]
+		node.Successors[0].NodePort = self.NodePort[:len(self.NodePort)]
+		node.Successors[1].NodeId = node.NodeId[:len(node.NodeId)]
+		node.Successors[1].NodeIp = node.NodeIp[:len(node.NodeIp)]
+		node.Successors[1].NodePort = node.NodePort[:len(node.NodePort)]
+		self.Predecessors[0].NodeId = node.NodeId[:len(node.NodeId)]
+		self.Predecessors[0].NodeIp = node.NodeIp[:len(node.NodeIp)]
+		self.Predecessors[0].NodePort = node.NodePort[:len(node.NodePort)]
+		self.Predecessors[1].NodeId = self.NodeId[:len(self.NodeId)]
+		self.Predecessors[1].NodeIp = self.NodeIp[:len(self.NodeIp)]
+		self.Predecessors[1].NodePort = self.NodePort[:len(self.NodePort)]
 
-    } else {
+	} else {
 
-        for(!between([]byte(self.nodeId), []byte(self.successors[0].nodeId), []byte(node.nodeId))) {
-    
-            self = self.successor
-        
-        }
+		for !between([]byte(self.NodeId), []byte(self.Successors[0].NodeId), []byte(node.NodeId)) {
 
-        if self.successors[1].nodeId == self.nodeId {       // new node connects to a ring of two nodes
+			self = self.Successor
 
-            node.successor = self.successor
-            node.successor.predecessor = node
-            node.successors[0].nodeId = self.successors[0].nodeId[:len(self.successors[0].nodeId)]
-            node.successors[0].nodeIp = self.successors[0].nodeIp[:len(self.successors[0].nodeIp)] 
-            node.successors[0].nodePort = self.successors[0].nodePort[:len(self.successors[0].nodePort)] 
-            node.successors[1].nodeId = self.successors[1].nodeId[:len(self.successors[1].nodeId)]
-            node.successors[1].nodeIp = self.successors[1].nodeIp[:len(self.successors[1].nodeIp)] 
-            node.successors[1].nodePort = self.successors[1].nodePort[:len(self.successors[1].nodePort)] 
-            node.successor.predecessors[0].nodeId = node.nodeId[:len(self.nodeId)]
-            node.successor.predecessors[0].nodeIp = node.nodeIp[:len(self.nodeIp)] 
-            node.successor.predecessors[0].nodePort = node.nodePort[:len(self.nodePort)] 
-            node.successor.predecessors[1].nodeId = self.nodeId[:len(self.nodeId)]
-            node.successor.predecessors[1].nodeIp = self.nodeIp[:len(self.nodeIp)]
-            node.successor.predecessors[1].nodePort = self.nodePort[:len(self.nodePort)] 
-            node.successor.successors[1].nodeId = node.nodeId[:len(node.nodeId)]
-            node.successor.successors[1].nodeIp = node.nodeIp[:len(node.nodeIp)]
-            node.successor.successors[1].nodePort = node.nodePort[:len(node.nodePort)]
+		}
 
-            self.successor = node
-            node.predecessor = self
-            self.successors[0].nodeId = node.nodeId[:len(node.nodeId)]
-            self.successors[0].nodeIp = node.nodeIp[:len(node.nodeIp)] 
-            self.successors[0].nodePort = node.nodePort[:len(node.nodePort)] 
-            self.successors[1].nodeId = node.successors[0].nodeId[:len(node.successors[0].nodeId)]
-            self.successors[1].nodeIp = node.successors[0].nodeIp[:len(node.successors[0].nodeIp)] 
-            self.successors[1].nodePort = node.successors[0].nodePort[:len(node.successors[0].nodePort)] 
-            node.predecessors[0].nodeId = self.nodeId[:len(self.nodeId)]
-            node.predecessors[0].nodeIp = self.nodeIp[:len(self.nodeIp)] 
-            node.predecessors[0].nodePort = self.nodePort[:len(self.nodePort)] 
-            node.predecessors[1].nodeId = self.predecessors[0].nodeId[:len(node.predecessors[0].nodeId)]
-            node.predecessors[1].nodeIp = self.predecessors[0].nodeIp[:len(node.predecessors[0].nodeIp)]
-            node.predecessors[1].nodePort = self.predecessors[0].nodePort[:len(node.predecessors[0].nodePort)]
-            self.predecessors[1].nodeId = node.nodeId[:len(node.nodeId)]
-            self.predecessors[1].nodeIp = node.nodeIp[:len(node.nodeIp)] 
-            self.predecessors[1].nodePort = node.nodePort[:len(node.nodePort)]
-            
+		if self.Successors[1].NodeId == self.NodeId { // new node connects to a ring of two nodes
 
-        } else {    // new node connects to a ring of at least three nodes
-            
-            node.successor = self.successor
-            node.successor.predecessor = node
-            node.successors[0].nodeId = self.successors[0].nodeId[:len(self.successors[0].nodeId)]
-            node.successors[0].nodeIp = self.successors[0].nodeIp[:len(self.successors[0].nodeIp)] 
-            node.successors[0].nodePort = self.successors[0].nodePort[:len(self.successors[0].nodePort)] 
-            node.successors[1].nodeId = self.successors[1].nodeId[:len(self.successors[1].nodeId)]
-            node.successors[1].nodeIp = self.successors[1].nodeIp[:len(self.successors[1].nodeIp)] 
-            node.successors[1].nodePort = self.successors[1].nodePort[:len(self.successors[1].nodePort)] 
-            node.successor.predecessors[0].nodeId = node.nodeId[:len(self.nodeId)]
-            node.successor.predecessors[0].nodeIp = node.nodeIp[:len(self.nodeIp)] 
-            node.successor.predecessors[0].nodePort = node.nodePort[:len(self.nodePort)] 
-            node.successor.predecessors[1].nodeId = self.nodeId[:len(self.nodeId)]
-            node.successor.predecessors[1].nodeIp = self.nodeIp[:len(self.nodeIp)]
-            node.successor.predecessors[1].nodePort = self.nodePort[:len(self.nodePort)] 
-            node.successor.successor.predecessors[1].nodeId = node.nodeId[:len(self.nodeId)]
-            node.successor.successor.predecessors[1].nodeIp = node.nodeIp[:len(self.nodeIp)] 
-            node.successor.successor.predecessors[1].nodePort = node.nodePort[:len(self.nodePort)] 
+			node.Successor = self.Successor
+			node.Successor.Predecessor = node
+			node.Successors[0].NodeId = self.Successors[0].NodeId[:len(self.Successors[0].NodeId)]
+			node.Successors[0].NodeIp = self.Successors[0].NodeIp[:len(self.Successors[0].NodeIp)]
+			node.Successors[0].NodePort = self.Successors[0].NodePort[:len(self.Successors[0].NodePort)]
+			node.Successors[1].NodeId = self.Successors[1].NodeId[:len(self.Successors[1].NodeId)]
+			node.Successors[1].NodeIp = self.Successors[1].NodeIp[:len(self.Successors[1].NodeIp)]
+			node.Successors[1].NodePort = self.Successors[1].NodePort[:len(self.Successors[1].NodePort)]
+			node.Successor.Predecessors[0].NodeId = node.NodeId[:len(self.NodeId)]
+			node.Successor.Predecessors[0].NodeIp = node.NodeIp[:len(self.NodeIp)]
+			node.Successor.Predecessors[0].NodePort = node.NodePort[:len(self.NodePort)]
+			node.Successor.Predecessors[1].NodeId = self.NodeId[:len(self.NodeId)]
+			node.Successor.Predecessors[1].NodeIp = self.NodeIp[:len(self.NodeIp)]
+			node.Successor.Predecessors[1].NodePort = self.NodePort[:len(self.NodePort)]
+			node.Successor.Successors[1].NodeId = node.NodeId[:len(node.NodeId)]
+			node.Successor.Successors[1].NodeIp = node.NodeIp[:len(node.NodeIp)]
+			node.Successor.Successors[1].NodePort = node.NodePort[:len(node.NodePort)]
 
-            self.successor = node
-            node.predecessor = self
-            self.predecessor.successors[1].nodeId = node.nodeId[:len(node.nodeId)]
-            self.predecessor.successors[1].nodeIp = node.nodeIp[:len(node.nodeIp)] 
-            self.predecessor.successors[1].nodePort = node.nodePort[:len(node.nodePort)] 
-            self.successors[0].nodeId = node.nodeId[:len(node.nodeId)]
-            self.successors[0].nodeIp = node.nodeIp[:len(node.nodeIp)] 
-            self.successors[0].nodePort = node.nodePort[:len(node.nodePort)] 
-            self.successors[1].nodeId = node.successors[0].nodeId[:len(node.successors[0].nodeId)]
-            self.successors[1].nodeIp = node.successors[0].nodeIp[:len(node.successors[0].nodeIp)] 
-            self.successors[1].nodePort = node.successors[0].nodePort[:len(node.successors[0].nodePort)] 
-            node.predecessors[0].nodeId = self.nodeId[:len(self.nodeId)]
-            node.predecessors[0].nodeIp = self.nodeIp[:len(self.nodeIp)] 
-            node.predecessors[0].nodePort = self.nodePort[:len(self.nodePort)] 
-            node.predecessors[1].nodeId = self.predecessors[0].nodeId[:len(node.predecessors[0].nodeId)]
-            node.predecessors[1].nodeIp = self.predecessors[0].nodeIp[:len(node.predecessors[0].nodeIp)]
-            node.predecessors[1].nodePort = self.predecessors[0].nodePort[:len(node.predecessors[0].nodePort)]
+			self.Successor = node
+			node.Predecessor = self
+			self.Successors[0].NodeId = node.NodeId[:len(node.NodeId)]
+			self.Successors[0].NodeIp = node.NodeIp[:len(node.NodeIp)]
+			self.Successors[0].NodePort = node.NodePort[:len(node.NodePort)]
+			self.Successors[1].NodeId = node.Successors[0].NodeId[:len(node.Successors[0].NodeId)]
+			self.Successors[1].NodeIp = node.Successors[0].NodeIp[:len(node.Successors[0].NodeIp)]
+			self.Successors[1].NodePort = node.Successors[0].NodePort[:len(node.Successors[0].NodePort)]
+			node.Predecessors[0].NodeId = self.NodeId[:len(self.NodeId)]
+			node.Predecessors[0].NodeIp = self.NodeIp[:len(self.NodeIp)]
+			node.Predecessors[0].NodePort = self.NodePort[:len(self.NodePort)]
+			node.Predecessors[1].NodeId = self.Predecessors[0].NodeId[:len(node.Predecessors[0].NodeId)]
+			node.Predecessors[1].NodeIp = self.Predecessors[0].NodeIp[:len(node.Predecessors[0].NodeIp)]
+			node.Predecessors[1].NodePort = self.Predecessors[0].NodePort[:len(node.Predecessors[0].NodePort)]
+			self.Predecessors[1].NodeId = node.NodeId[:len(node.NodeId)]
+			self.Predecessors[1].NodeIp = node.NodeIp[:len(node.NodeIp)]
+			self.Predecessors[1].NodePort = node.NodePort[:len(node.NodePort)]
 
-        }
-    }
+		} else { // new node connects to a ring of at least three nodes
 
-    //self.updateAllFingerTables()
+			node.Successor = self.Successor
+			node.Successor.Predecessor = node
+			node.Successors[0].NodeId = self.Successors[0].NodeId[:len(self.Successors[0].NodeId)]
+			node.Successors[0].NodeIp = self.Successors[0].NodeIp[:len(self.Successors[0].NodeIp)]
+			node.Successors[0].NodePort = self.Successors[0].NodePort[:len(self.Successors[0].NodePort)]
+			node.Successors[1].NodeId = self.Successors[1].NodeId[:len(self.Successors[1].NodeId)]
+			node.Successors[1].NodeIp = self.Successors[1].NodeIp[:len(self.Successors[1].NodeIp)]
+			node.Successors[1].NodePort = self.Successors[1].NodePort[:len(self.Successors[1].NodePort)]
+			node.Successor.Predecessors[0].NodeId = node.NodeId[:len(self.NodeId)]
+			node.Successor.Predecessors[0].NodeIp = node.NodeIp[:len(self.NodeIp)]
+			node.Successor.Predecessors[0].NodePort = node.NodePort[:len(self.NodePort)]
+			node.Successor.Predecessors[1].NodeId = self.NodeId[:len(self.NodeId)]
+			node.Successor.Predecessors[1].NodeIp = self.NodeIp[:len(self.NodeIp)]
+			node.Successor.Predecessors[1].NodePort = self.NodePort[:len(self.NodePort)]
+			node.Successor.Successor.Predecessors[1].NodeId = node.NodeId[:len(self.NodeId)]
+			node.Successor.Successor.Predecessors[1].NodeIp = node.NodeIp[:len(self.NodeIp)]
+			node.Successor.Successor.Predecessors[1].NodePort = node.NodePort[:len(self.NodePort)]
+
+			self.Successor = node
+			node.Predecessor = self
+			self.Predecessor.Successors[1].NodeId = node.NodeId[:len(node.NodeId)]
+			self.Predecessor.Successors[1].NodeIp = node.NodeIp[:len(node.NodeIp)]
+			self.Predecessor.Successors[1].NodePort = node.NodePort[:len(node.NodePort)]
+			self.Successors[0].NodeId = node.NodeId[:len(node.NodeId)]
+			self.Successors[0].NodeIp = node.NodeIp[:len(node.NodeIp)]
+			self.Successors[0].NodePort = node.NodePort[:len(node.NodePort)]
+			self.Successors[1].NodeId = node.Successors[0].NodeId[:len(node.Successors[0].NodeId)]
+			self.Successors[1].NodeIp = node.Successors[0].NodeIp[:len(node.Successors[0].NodeIp)]
+			self.Successors[1].NodePort = node.Successors[0].NodePort[:len(node.Successors[0].NodePort)]
+			node.Predecessors[0].NodeId = self.NodeId[:len(self.NodeId)]
+			node.Predecessors[0].NodeIp = self.NodeIp[:len(self.NodeIp)]
+			node.Predecessors[0].NodePort = self.NodePort[:len(self.NodePort)]
+			node.Predecessors[1].NodeId = self.Predecessors[0].NodeId[:len(node.Predecessors[0].NodeId)]
+			node.Predecessors[1].NodeIp = self.Predecessors[0].NodeIp[:len(node.Predecessors[0].NodeIp)]
+			node.Predecessors[1].NodePort = self.Predecessors[0].NodePort[:len(node.Predecessors[0].NodePort)]
+
+		}
+	}
+
+	//self.updateAllFingerTables()
 }
-

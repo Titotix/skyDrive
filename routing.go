@@ -1,90 +1,92 @@
 package main
 
 import (
+	//	"encoding/hex"
+	"errors"
 	"fmt"
-	"bytes"
-	"encoding/hex"	
 )
+
 // @param : node who is looking for the node responsible for key
 // @param : key
-func ( self *DHTnode ) lookup(key string) *DHTnode {
+func (t *DHTnode) Lookup(arg *ArgLookup, nodeResponsible *DHTnode) error {
 
-	keyByte, _ := hex.DecodeString(key)
+	//keyByte, _ := hex.DecodeString(arg.Key)
 
-	if (self.nodeId == key) {
-		return self
-	} else if (self.successor.nodeId == key ) {
-		return self.successor
-	} else if (between(self.nodeIdByte, self.successor.nodeIdByte, keyByte ) ) {
-		return self
-	} else if ( bytes.Compare(keyByte, self.successor.nodeIdByte) == 1 || bytes.Compare(keyByte, self.nodeIdByte) == -1 ) {
-		
-		return self.successor.lookup(key)
+	if arg.Node.NodeId == arg.Key {
+		*nodeResponsible = arg.Node
+		return nil
+		//BUG must create rpc call in order to get nodeId from successor
+		//} else if arg.Node.Successor.NodeId == arg.Key {
+		//	nodeResponsible = arg.Node.Successor
+		//	return nil
+		//} else if between(arg.Node.NodeIdByte, arg.Node.Successor.NodeIdByte, keyByte) {
+		//	*nodeResponsible = arg.Node
+		//	return nil
+		//} else if bytes.Compare(keyByte, arg.Node.Successor.NodeIdByte) == 1 || bytes.Compare(keyByte, arg.Node.NodeIdByte) == -1 {
+
+		//arg.Node.Successor.Lookup(arg, nodeResponsible)
+		//	fmt.Printf("ECHEC")
 	}
-	fmt.Printf("\n ***** Fail to lookup ***** \n\n");
-	return nil
+	return errors.New("Lookup failed")
 }
 
 func (self *DHTnode) fingerLookup(key string) *DHTnode {
 
-	fmt.Printf("checking node: %s\n", self.nodeId)
+	fmt.Printf("checking node: %s\n", self.NodeId)
 
 	targetNodeId := ""
 	responsibleNode := self
 
-	if ( between([]byte(self.predecessor.nodeId), []byte(self.nodeId), []byte(key)) || self.nodeId == key ) {  // self is responsible for key
+	if between([]byte(self.Predecessor.NodeId), []byte(self.NodeId), []byte(key)) || self.NodeId == key { // self is responsible for key
 		return self
-	
-	} else { 
+
+	} else {
 
 		// deciding finger to use by iteration, replace with better algoritm???
 		fingerFound := false
 		i := 0
-		for ( (!(fingerFound == true)) && (i < 159) ) {
+		for (!(fingerFound == true)) && (i < 159) {
 
-			if between( []byte(self.fingers[i].key), []byte(self.fingers[i+1].key), []byte(key)) {
-				
-				targetNodeId = self.fingers[i].nodeId
+			if between([]byte(self.Fingers[i].key), []byte(self.Fingers[i+1].key), []byte(key)) {
+
+				targetNodeId = self.Fingers[i].NodeId
 				fingerFound = true
-				
+
 			} else {
 				i = i + 1
 			}
 		}
-		if (!fingerFound) {
-			targetNodeId = self.fingers[159].nodeId
+		if !fingerFound {
+			targetNodeId = self.Fingers[159].NodeId
 		}
 
 		// traversing ring clockwise instead of send request directly via IP of node
-		for (!(self.successor.nodeId == targetNodeId)) {
-			self = self.successor
+		for !(self.Successor.NodeId == targetNodeId) {
+			self = self.Successor
 		}
-		
+
 		// recursive request to closest node pointed to by finger
-		responsibleNode = self.successor.fingerLookup(key)
+		responsibleNode = self.Successor.fingerLookup(key)
 		return responsibleNode
 	}
-	
+
 }
 
+func (self *DHTnode) ringLookup(hashedKey string) *DHTnode {
 
-func (self *DHTnode) ringLookup(hashedKey string) *DHTnode{
-	
 	nodeFound := false
-    key := []byte(hashedKey)
+	key := []byte(hashedKey)
 
-	for nodeFound == false { 
-		
-		id1 := []byte(self.nodeId)
-    	id2 := []byte(self.successors[0].nodeId)
-		
-    	if (between(id1, id2, key)) {
-      		nodeFound = true
-    	} else {
-	      	self = self.successor
-    	}
-    }
-    return self.successor
+	for nodeFound == false {
+
+		id1 := []byte(self.NodeId)
+		id2 := []byte(self.Successors[0].NodeId)
+
+		if between(id1, id2, key) {
+			nodeFound = true
+		} else {
+			self = self.Successor
+		}
+	}
+	return self.Successor
 }
-
-

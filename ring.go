@@ -49,6 +49,6 @@ func main() {
 	testKey := scanner.Text()
 	testHash := sha1hash(testKey)
 	fmt.Printf("Key hashed to: %s\n\n", testHash)
-	fmt.Printf("\nlookup result: %s\n", firstNode.fingerLookup(testHash).nodeId)
+	fmt.Printf("\nlookup result: %s\n", firstNode.fingerLookup(testHash).NodeId)
 	
 }

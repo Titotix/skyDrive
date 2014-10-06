@@ -35,5 +35,6 @@ func (nodeTarget *DHTnode) lookup(keyTarget string) *DHTnode {
 	arg := ArgLookup{*nodeTarget, keyTarget}
 	clientSocket := nodeTarget.connect(arg.Node.NodeIp, arg.Node.NodePort)
 	reply := nodeTarget.callLookup(clientSocket, &arg)
+	clientSocket.Close()
 	return reply
 }

@@ -6,6 +6,10 @@ import (
 	"os"
 )
 
+var thisNode *DHTnode
+
+//thisNode.NodeId="moi"
+
 /*
 / When finished this file should be able to replace ring.go
 / A single node is created, the node stars to lisen for connection attempts
@@ -16,7 +20,7 @@ import (
 
 func main() {
 
-	thisNode := new(DHTnode)
+	thisNode = new(DHTnode)
 	fmt.Printf("\nNew node is starting...\n")
 
 	fmt.Printf("Port for this node: ")
@@ -29,7 +33,7 @@ func main() {
 	nodePort := scanner.Text()
 
 	thisNode = createNode(nodePort)
-	//thisNode.updateAllFingerTables()
+	//	thisNode.updateAllFingerTables()
 
 	//Enable listening for rpc
 	thisNode.listenHTTP(nodePort)

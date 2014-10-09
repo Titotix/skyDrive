@@ -7,8 +7,13 @@ import (
 )
 
 type ArgLookup struct {
+	//self
 	Node DHTnode
 	Key  string
+}
+
+type ArgAddToRing struct {
+	FirstNode DHTnode
 }
 
 /*

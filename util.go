@@ -1,12 +1,11 @@
 package main
 
 import (
-	"fmt"
 	"bytes"
 	"crypto/sha1"
+	"fmt"
 	"math/big"
 )
-
 
 func sha1hash(str string) string {
 	// calculate sha-1 hash
@@ -15,7 +14,6 @@ func sha1hash(str string) string {
 
 	return fmt.Sprintf("%x", hasher.Sum(nil))
 }
-
 
 func distance(a, b []byte, bits int) *big.Int {
 	var ring big.Int
@@ -31,7 +29,6 @@ func distance(a, b []byte, bits int) *big.Int {
 	(&dist).Mod(&dist, &ring)
 	return &dist
 }
-
 
 func between(id1, id2, key []byte) bool {
 	// 0 if a==b, -1 if a < b, and +1 if a > b
@@ -55,10 +52,9 @@ func between(id1, id2, key []byte) bool {
 	}
 }
 
-
 // (n + 2^(k-1)) mod (2^m)
-func calcFinger(n []byte, k int, m int) (string) {
-//func calcFinger(n []byte, k int, m int) (string, []byte) {  // original version has two return values, do we need those?
+func calcFinger(n []byte, k int, m int) string {
+	//func calcFinger(n []byte, k int, m int) (string, []byte) {  // original version has two return values, do we need those?
 
 	// convert the n to a bigint
 	nBigInt := big.Int{}
@@ -81,7 +77,6 @@ func calcFinger(n []byte, k int, m int) (string) {
 	result := big.Int{}
 	result.Mod(&sum, &ceil)
 
-
 	resultBytes := result.Bytes()
 	resultHex := fmt.Sprintf("%x", resultBytes)
 
@@ -92,6 +87,4 @@ func calcFinger(n []byte, k int, m int) (string) {
 	return resultHex
 }
 
-
-
-
+//func

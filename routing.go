@@ -8,12 +8,12 @@ import (
 
 // @param : node who is looking for the node responsible for key
 // @param : key
-func (thisNode *DHTnode) Lookup(arg *ArgLookup, nodeResponsible *DHTnode) error {
+func (t *DHTnode) Lookup(arg *ArgLookup, nodeResponsible *DHTnode) error {
 
 	//keyByte, _ := hex.DecodeString(arg.Key)
 	fmt.Printf("node id : %s  :::: port : %s", thisNode.NodeId, thisNode.NodePort)
 
-	if arg.Node.NodeId == arg.Key {
+	if thisNode.NodeId == arg.Key {
 		*nodeResponsible = arg.Node
 		return nil
 		//} else if arg.Node.Successor.NodeId == arg.Key {
@@ -30,48 +30,50 @@ func (thisNode *DHTnode) Lookup(arg *ArgLookup, nodeResponsible *DHTnode) error 
 	return errors.New("Lookup failed")
 }
 
-// I am working on it, not yet ready
-//func (f *DHTnode) FingerLookup(arg *ArgLookup, nodeResponsible *DHTnode) error {
-//
-//	fmt.Printf("checking node: %s\n", self.NodeId)
-//
-//	targetNodeId := ""
-//	responsibleNode := self
-//
-//	if between([]byte(self.Predecessor.NodeId), []byte(self.NodeId), []byte(key)) || self.NodeId == key { // self is responsible for key
-//		return self
-//
-//	} else {
-//
-//		// deciding finger to use by iteration, replace with better algoritm???
-//		fingerFound := false
-//		i := 0
-//		for (!(fingerFound == true)) && (i < 159) {
-//
-//			if between([]byte(self.Fingers[i].key), []byte(self.Fingers[i+1].key), []byte(key)) {
-//
-//				targetNodeId = self.Fingers[i].NodeId
-//				fingerFound = true
-//
-//			} else {
-//				i = i + 1
-//			}
-//		}
-//		if !fingerFound {
-//			targetNodeId = self.Fingers[159].NodeId
-//		}
-//
-//		// traversing ring clockwise instead of send request directly via IP of node
-//		for !(self.Successor.NodeId == targetNodeId) {
-//			self = self.Successor
-//		}
-//
-//		// recursive request to closest node pointed to by finger
-//		responsibleNode = self.Successor.fingerLookup(key)
-//		return responsibleNode
-//	}
-//
-//}
+// @param : node who is looking for the node responsible for key
+// @param : key
+func (f *DHTnode) FingerLookup(arg *ArgLookup, nodeResponsible *DHTnode) error {
+
+	fmt.Printf("checking node: %s\n", thisNode.NodeId)
+
+	targetNodeId := ""
+	nodeResponsible = thisNode
+
+	if between([]byte(thisNode.Predecessor.NodeId), []byte(thisNode.NodeId), []byte(arg.Key)) || thisNode.NodeId == arg.Key { // self is responsible for key
+		*nodeResponsible = *thisNode
+		return nil
+
+	} else {
+
+		// deciding finger to use by iteration, replace with better algoritm???
+		fingerFound := false
+		i := 0
+		for (!(fingerFound == true)) && (i < 159) {
+
+			if between([]byte(thisNode.Fingers[i].key), []byte(thisNode.Fingers[i+1].key), []byte(arg.Key)) {
+
+				targetNodeId = thisNode.Fingers[i].NodeId
+				fingerFound = true
+
+			} else {
+				i = i + 1
+			}
+		}
+		if !fingerFound {
+			targetNodeId = thisNode.Fingers[159].NodeId
+		}
+
+		// traversing ring clockwise instead of send request directly via IP of node
+		for !(thisNode.Successor.NodeId == targetNodeId) {
+			thisNode = thisNode.Successor
+		}
+
+		// recursive request to closest node pointed to by finger
+		//		*responsibleNode = thisNode.Successor.fingerLookup(arg.Key)
+		return nil
+	}
+
+}
 
 func (self *DHTnode) ringLookup(hashedKey string) *DHTnode {
 

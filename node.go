@@ -99,7 +99,7 @@ func makeDHTNode(NodeIp string, NodePort string, joinViaIp string, joinViaPort s
 	for i := 0; i < FingersWanted; i++ {
 		fingerNumber := i + 1
 		newFingerKey := calcFinger(node.IdByte, fingerNumber, 160)
-		newFinger := &Finger{newFingerKey, "", nil, "", ""}
+		newFinger := &Finger{*new(Node), newFingerKey}
 		node.Fingers = append(node.Fingers, newFinger)
 	}
 
@@ -268,6 +268,8 @@ func (t *DHTnode) init_finger_table (nodeJoined *DHTnode) {
 		else {
 			//Can't work like that. lookup return DHTnode and I must receive Finger
 			//need to create node struct
-			thisNode.Finger[i+1] = nodeJoined.lookup(fingerStart)
+
+			node := nodeJoined.lookup(fingerStart)
+			thisNode.Finger[i+1] = nodeToDHTnode(node)
 		}
 */

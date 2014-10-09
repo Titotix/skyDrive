@@ -237,3 +237,15 @@ func (self *DHTnode) addToRing(node *DHTnode) {
 
 	//self.updateAllFingerTables()
 }
+
+/* AddToRing
+Available for rpc
+@arg.FirstNode is the node which nodeAdded
+*/
+//func (t *DHTnode) AddToRing(arg *ArgAddToRing, nodeAdded *DHTnode) error {
+
+//}
+
+/*func (self *DHTnode) init_finger_table (nodeJoined *DHTnode) {
+self.Fingers[0] = nodeJoined.lookup
+*/

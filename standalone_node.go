@@ -6,7 +6,9 @@ import (
 	"os"
 )
 
+//GLobal variable
 var thisNode *DHTnode
+var m int
 
 //thisNode.NodeId="moi"
 
@@ -21,6 +23,7 @@ var thisNode *DHTnode
 func main() {
 
 	thisNode = new(DHTnode)
+	m = 160
 	fmt.Printf("\nNew node is starting...\n")
 
 	fmt.Printf("Port for this node: ")

@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 )
 
+//Could be nice to define minimal node struct
 type DHTnode struct {
 	NodeId         string
 	NodeIdByte     []byte
@@ -241,11 +242,27 @@ func (self *DHTnode) addToRing(node *DHTnode) {
 /* AddToRing
 Available for rpc
 @arg.FirstNode is the node which nodeAdded
+*/ /*Work in progress
+/*func (t *DHTnode) AddToRing(arg *ArgAddToRing, nodeAdded *DHTnode) error {
+
+}
 */
-//func (t *DHTnode) AddToRing(arg *ArgAddToRing, nodeAdded *DHTnode) error {
 
-//}
+//implem algo from chord doc p6
+/*
+func (t *DHTnode) init_finger_table (nodeJoined *DHTnode) {
+	thisNode.Fingers[0] = nodeJoined.lookup(calcFingerSha(0)
+	thisNode.Predecessor = thisNode.Successor.Predecessor
+	thisNode.Successor.Predecessor = thisNode
 
-/*func (self *DHTnode) init_finger_table (nodeJoined *DHTnode) {
-self.Fingers[0] = nodeJoined.lookup
+	for i :=0; i< m-1; i++ {
+		fingerStart := calcFingerSha(thisNode.Finger[i+1]
+		if (between(thisNode.NodeId, thisNode.Finger[i], ([]byte)fingerStart)) {
+			thisNode.Finger[i+1].node = thisNode.Finger[i]
+		}
+		else {
+			//Can't work like that. lookup return DHTnode and I must receive Finger
+			//need to create node struct
+			thisNode.Finger[i+1] = nodeJoined.lookup(fingerStart)
+		}
 */

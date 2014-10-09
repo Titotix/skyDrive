@@ -1,7 +1,6 @@
 package main
 
 import (
-	//	"encoding/hex"
 	"errors"
 	"fmt"
 )
@@ -30,8 +29,10 @@ func (t *DHTnode) Lookup(arg *ArgLookup, nodeResponsible *DHTnode) error {
 	return errors.New("Lookup failed")
 }
 
-// @param : node who is looking for the node responsible for key
-// @param : key
+/* @param : node who is looking for the node responsible for key
+@param : key
+Use thisNode global variable
+*/
 func (f *DHTnode) FingerLookup(arg *ArgLookup, nodeResponsible *DHTnode) error {
 
 	fmt.Printf("checking node: %s\n", thisNode.NodeId)

@@ -87,4 +87,6 @@ func calcFinger(n []byte, k int, m int) string {
 	return resultHex
 }
 
-//func
+func calcFingerSha(n []byte, k int) string {
+	calcFinger(n, k, m)
+}

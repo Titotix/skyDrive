@@ -25,7 +25,7 @@ keyTarget is the key which we are looking for
 func (self *DHTnode) callLookup(clientSocket *rpc.Client, arg *ArgLookup) *DHTnode {
 
 	var reply DHTnode
-	err := clientSocket.Call("DHTnode.Lookup", arg, &reply)
+	err := clientSocket.Call("DHTnode.FingerLookup", arg, &reply)
 	if err != nil {
 		log.Fatal("remote lookup error:", err)
 	}

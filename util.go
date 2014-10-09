@@ -88,5 +88,5 @@ func calcFinger(n []byte, k int, m int) string {
 }
 
 func calcFingerSha(n []byte, k int) string {
-	calcFinger(n, k, m)
+	return calcFinger(n, k, m)
 }

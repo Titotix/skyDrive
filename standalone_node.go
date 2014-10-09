@@ -10,8 +10,6 @@ import (
 var thisNode *DHTnode
 var m int
 
-//thisNode.NodeId="moi"
-
 /*
 / When finished this file should be able to replace ring.go
 / A single node is created, the node stars to lisen for connection attempts
@@ -66,7 +64,7 @@ func main() {
 	// Care ! lookup have to be used with nodeTarget not whith thisNode (current node)
 	// But as far as successor are not set, can't test for the moment with successor (by examples)
 	reply := thisNode.lookup(testKey)
-	fmt.Printf("\nlookup result: %s\n", reply.NodeId)
+	fmt.Printf("\nlookup result: %s\n", reply.Id)
 
 	//fmt.Printf("\nListening on port %s\n", thisNode.NodePort)
 	//fmt.Printf("\nConnect to remote node on port: ")

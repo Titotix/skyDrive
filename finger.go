@@ -2,8 +2,8 @@ package main
 
 type Finger struct {
 	key        string
-	NodeId     string
-	NodeIdByte []byte
+	Id     string
+	IdByte []byte
 	nodeIp     string
 	nodePort   string
 }

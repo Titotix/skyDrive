@@ -65,7 +65,7 @@ func (self *DHTnode) startNodeListener() bool {
 func (self *DHTnode) runListener() {
 
 	fmt.Println("\nListener started")
-	port, _ := strconv.Atoi(self.NodePort)
+	port, _ := strconv.Atoi(self.Port)
 	fmt.Printf("Listening on port %d\n", port)
 	addr := net.UDPAddr{
 		Port: port,
@@ -130,17 +130,17 @@ func (node *DHTnode) connect(host string, port string) *rpc.Client {
 
 //Just an abstraction of method connect
 func (node *DHTnode) connectToNode(nodeTarget DHTnode) *rpc.Client {
-	return node.connect(nodeTarget.NodeIp, nodeTarget.NodePort)
+	return node.connect(nodeTarget.Ip, nodeTarget.Port)
 }
 
 /*
 func runNode(node *DHTnode) {
-	fmt.Printf("\nNode %s has started\n", node.NodeId)
+	fmt.Printf("\nNode %s has started\n", node.Id)
 	for i :=0; i < 10; i++ {
 		time.Sleep(1000 * time.Millisecond)
 		fmt.Println("Node is running")
 	}
 
-	fmt.Printf("\nNode %s has finished\n", node.NodeId)
+	fmt.Printf("\nNode %s has finished\n", node.Id)
 }
 */

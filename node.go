@@ -254,22 +254,24 @@ Available for rpc
 */
 
 //implem algo from chord doc p6
-/*
-func (t *DHTnode) init_finger_table (nodeJoined *DHTnode) {
-	thisNode.Fingers[0] = nodeJoined.lookup(calcFingerSha(0)
-	thisNode.Predecessor = thisNode.Successor.Predecessor
-	thisNode.Successor.Predecessor = thisNode
+
+//Must add case of second node in the ring
+func (t *DHTnode) initFingerTable (nodeJoined *DHTnode) {
+	thisNode.Finger[0].key = calcFingerSha(0)
+	thisNode.Fingers[0] = nodeJoined.lookup(thisNode.Finger[0].key)
+	thisNode.Predecessor = thisNode.Finger[0].Predecessor
+	thisNode.Finger[0].Predecessor = thisNode
 
 	for i :=0; i< m-1; i++ {
 		fingerStart := calcFingerSha(thisNode.Finger[i+1]
+		thisNode.Finger[i+1].key = fingerStart
+
 		if (between(thisNode.Id, thisNode.Finger[i], ([]byte)fingerStart)) {
 			thisNode.Finger[i+1].node = thisNode.Finger[i]
 		}
 		else {
-			//Can't work like that. lookup return DHTnode and I must receive Finger
-			//need to create node struct
-
 			node := nodeJoined.lookup(fingerStart)
 			thisNode.Finger[i+1] = nodeToDHTnode(node)
 		}
-*/
+	}
+}

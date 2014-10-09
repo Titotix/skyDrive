@@ -53,8 +53,7 @@ func between(id1, id2, key []byte) bool {
 }
 
 // (n + 2^(k-1)) mod (2^m)
-func calcFinger(n []byte, k int, m int) string {
-	//func calcFinger(n []byte, k int, m int) (string, []byte) {  // original version has two return values, do we need those?
+func calcFinger(n []byte, k int, m int) (string, []byte) {
 
 	// convert the n to a bigint
 	nBigInt := big.Int{}
@@ -80,14 +79,10 @@ func calcFinger(n []byte, k int, m int) string {
 	resultBytes := result.Bytes()
 	resultHex := fmt.Sprintf("%x", resultBytes)
 
-	//fmt.Printf("calcFinger, Bytes %d\n", resultBytes)
-	//fmt.Printf("calcFinger, Hex %s\n", resultHex)
-
-	//return resultHex, resultBytes
-	return resultHex
+	return resultHex, resultBytes
 }
 
-func calcFingerSha(n []byte, k int) string {
+func calcFingerSha(n []byte, k int) (string, []byte) {
 	return calcFinger(n, k, m)
 }
 

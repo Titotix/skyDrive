@@ -144,3 +144,17 @@ func runNode(node *DHTnode) {
 	fmt.Printf("\nNode %s has finished\n", node.Id)
 }
 */
+
+/* WTH, type IP, Addr, AddrIP.... !!! !
+func getIp() net.IP {
+	addrs, _ := net.InterfaceAddrs()
+	var publicAddr []net.IP
+	for _, addr := range addrs {
+		//IpByte, _ := strconv.Atoi(addr.String())
+		//if !IpByte.IsLoopback() {
+			publicAddr = append(publicAddr, addr)
+		//}
+		fmt.Println("addr: " + addr.String())
+	}
+}
+*/

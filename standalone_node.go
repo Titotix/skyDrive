@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"net"
 	"os"
 )
 
@@ -20,6 +21,15 @@ var m int
 
 func main() {
 
+	addrs, _ := net.InterfaceAddrs()
+	for _, addr := range addrs {
+		fmt.Println("addr: " + addr.String())
+
+	}
+
+	//fmt.Println("addr : " + net.InterfaceAddrs[0].String())
+	//fmt.Println("addr : " + net.InterfaceAddrs.String())
+	//fmt.Println("addr : " + net.InterfaceAddrs[1].String())
 	thisNode = new(DHTnode)
 	m = 160
 	fmt.Printf("\nNew node is starting...\n")

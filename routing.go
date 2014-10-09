@@ -84,7 +84,7 @@ func (self *DHTnode) ringLookup(hashedKey string) *DHTnode {
 	for nodeFound == false {
 
 		id1 := []byte(self.Id)
-		id2 := []byte(self.Successors[0].Id)
+		id2 := []byte(self.Successor.Id)
 
 		if between(id1, id2, key) {
 			nodeFound = true

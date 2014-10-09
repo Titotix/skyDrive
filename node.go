@@ -4,7 +4,6 @@ import (
 	"encoding/hex"
 )
 
-//Could be nice to define minimal node struct
 type Node struct {
 	Id     string
 	IdByte []byte
@@ -19,20 +18,10 @@ type DHTnode struct {
 	Fingers        []*Finger
 	Predecessor    *DHTnode
 	Successor      *DHTnode
-	Predecessors   []*NeighbourNode // larger index number = further away in ring
-	Successors     []*NeighbourNode // same as above
-	joinViaIp      string
-	joinViaPort    string
-}
-
-type NeighbourNode struct {
-	Id       string
-	IdByte   []byte
-	NodeIp   string
-	NodePort string
-	//storagePath string
-	//storageContent string
-
+	//	Predecessors   []*Node // larger index number = further away in ring
+	//	Successors     []*Node // same as above
+	joinViaIp   string
+	joinViaPort string
 }
 
 func (self *DHTnode) updateIncorrectFingers() {
@@ -93,24 +82,24 @@ func makeDHTNode(NodeIp string, NodePort string, joinViaIp string, joinViaPort s
 	IdByte, _ := hex.DecodeString(IdStr)
 
 	simpleNode := Node{IdStr, IdByte, NodeIp, NodePort}
-	node := &DHTnode{simpleNode, "", "", nil, nil, nil, nil, nil, joinViaIp, joinViaPort}
+	node := &DHTnode{simpleNode, "", "", nil, nil, nil, joinViaIp, joinViaPort}
 
 	FingersWanted := 160
 	for i := 0; i < FingersWanted; i++ {
 		fingerNumber := i + 1
-		newFingerKey := calcFinger(node.IdByte, fingerNumber, 160)
+		newFingerKey, _ := calcFinger(node.IdByte, fingerNumber, 160)
 		newFinger := &Finger{*new(Node), newFingerKey}
 		node.Fingers = append(node.Fingers, newFinger)
 	}
 
-	newPredecessor0 := &NeighbourNode{"", nil, "", ""}
-	newPredecessor1 := &NeighbourNode{"", nil, "", ""}
-	newSuccessor0 := &NeighbourNode{"", nil, "", ""}
-	newSuccessor1 := &NeighbourNode{"", nil, "", ""}
-	node.Predecessors = append(node.Predecessors, newPredecessor0)
-	node.Predecessors = append(node.Predecessors, newPredecessor1)
-	node.Successors = append(node.Successors, newSuccessor0)
-	node.Successors = append(node.Successors, newSuccessor1)
+	//newPredecessor0 := &Node{"", nil, "", ""}
+	//newPredecessor1 := &Node{"", nil, "", ""}
+	//newSuccessor0 := &Node{"", nil, "", ""}
+	//newSuccessor1 := &Node{"", nil, "", ""}
+	//node.Predecessors = append(node.Predecessors, newPredecessor0)
+	//node.Predecessors = append(node.Predecessors, newPredecessor1)
+	//node.Successors = append(node.Successors, newSuccessor0)
+	//node.Successors = append(node.Successors, newSuccessor1)
 
 	return node
 }
@@ -256,22 +245,28 @@ Available for rpc
 //implem algo from chord doc p6
 
 //Must add case of second node in the ring
-func (t *DHTnode) initFingerTable (nodeJoined *DHTnode) {
-	thisNode.Finger[0].key = calcFingerSha(0)
-	thisNode.Fingers[0] = nodeJoined.lookup(thisNode.Finger[0].key)
-	thisNode.Predecessor = thisNode.Finger[0].Predecessor
-	thisNode.Finger[0].Predecessor = thisNode
+/*
+ Initalize Finger[] table for current node
+*/
+func (t *DHTnode) initFingerTable(nodeJoined *DHTnode) {
+	//thisNode.Fingers[0].key, _ = calcFingerSha(thisNode.IdByte, 0)
 
-	for i :=0; i< m-1; i++ {
-		fingerStart := calcFingerSha(thisNode.Finger[i+1]
-		thisNode.Finger[i+1].key = fingerStart
+	//Let's look for responsible node for the first finger
+	successor := *nodeJoined.lookup(thisNode.Fingers[0].key)
+	thisNode.Fingers[0].Node = DHTnodeToNode(successor)
 
-		if (between(thisNode.Id, thisNode.Finger[i], ([]byte)fingerStart)) {
-			thisNode.Finger[i+1].node = thisNode.Finger[i]
-		}
-		else {
-			node := nodeJoined.lookup(fingerStart)
-			thisNode.Finger[i+1] = nodeToDHTnode(node)
+	thisNode.Predecessor = successor.Predecessor
+	//thisNode.Fingers[0].Predecessor = thisNode
+
+	for i := 0; i < m-1; i++ {
+		fingerStart, fingerStartByte := calcFingerSha(thisNode.Fingers[i+1].IdByte, i+1)
+		thisNode.Fingers[i+1].key = fingerStart
+
+		if between(thisNode.IdByte, thisNode.Fingers[i].IdByte, fingerStartByte) {
+			thisNode.Fingers[i+1] = thisNode.Fingers[i]
+		} else {
+			node := *nodeJoined.lookup(fingerStart)
+			thisNode.Fingers[i+1].Node = DHTnodeToNode(node)
 		}
 	}
 }

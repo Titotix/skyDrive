@@ -90,3 +90,12 @@ func calcFinger(n []byte, k int, m int) string {
 func calcFingerSha(n []byte, k int) string {
 	return calcFinger(n, k, m)
 }
+
+func DHTnodeToNode(dhtNode DHTnode) Node {
+	node := new(Node)
+	node.Id = dhtNode.Id
+	node.IdByte = dhtNode.IdByte
+	node.Ip = dhtNode.Ip
+	node.Port = dhtNode.Port
+	return *node
+}

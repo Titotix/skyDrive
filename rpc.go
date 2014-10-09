@@ -7,8 +7,7 @@ import (
 )
 
 type ArgLookup struct {
-	//self
-	Node DHTnode
+	Node DHTnode //useless
 	Key  string
 }
 

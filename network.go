@@ -108,9 +108,10 @@ func (self *DHTnode) runListener() {
 	}
 	fmt.Println("Listener finished")
 }
+
+//TODO delete parameter port
 func (self *DHTnode) listenHTTP(port string) {
-	arg := new(DHTnode)
-	rpc.Register(arg)
+	rpc.Register(self)
 	rpc.HandleHTTP()
 	socket, e := net.Listen("tcp", ":"+port)
 	if e != nil {
@@ -119,8 +120,8 @@ func (self *DHTnode) listenHTTP(port string) {
 	go http.Serve(socket, nil)
 }
 
-// node is going to connect to remote http server (@host, @port)
-func (node *DHTnode) connect(host string, port string) *rpc.Client {
+// Current node is going to connect to remote http server (@host, @port)
+func connect(host string, port string) *rpc.Client {
 	client, err := rpc.DialHTTP("tcp", host+":"+port)
 	if err != nil {
 		log.Fatal("dialing:", err)
@@ -129,8 +130,8 @@ func (node *DHTnode) connect(host string, port string) *rpc.Client {
 }
 
 //Just an abstraction of method connect
-func (node *DHTnode) connectToNode(nodeTarget DHTnode) *rpc.Client {
-	return node.connect(nodeTarget.Ip, nodeTarget.Port)
+func connectToNode(nodeTarget BasicNode) *rpc.Client {
+	return connect(nodeTarget.Ip, nodeTarget.Port)
 }
 
 /*
@@ -145,16 +146,35 @@ func runNode(node *DHTnode) {
 }
 */
 
-/* WTH, type IP, Addr, AddrIP.... !!! !
+// WTH, type IP, Addr, AddrIP.... !!! !
 func getIp() net.IP {
 	addrs, _ := net.InterfaceAddrs()
-	var publicAddr []net.IP
+
+	//var publicAddr []net.IP
 	for _, addr := range addrs {
 		//IpByte, _ := strconv.Atoi(addr.String())
 		//if !IpByte.IsLoopback() {
-			publicAddr = append(publicAddr, addr)
+		//publicAddr = append(publicAddr, addr)
 		//}
 		fmt.Println("addr: " + addr.String())
 	}
+	return nil
 }
-*/
+
+func listAddr() []net.Addr {
+	addrs, _ := net.InterfaceAddrs()
+	return addrs
+	//for _, addr := range addrs {
+	//	fmt.Println("addr: " + addr.String())
+	//}
+}
+
+func isAlive(node BasicNode) bool {
+	client, err := rpc.DialHTTP("tcp", node.Ip+":"+node.Port)
+	if err != nil {
+		fmt.Println(err)
+		return false
+	}
+	client.Close()
+	return true
+}

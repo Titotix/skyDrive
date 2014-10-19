@@ -1,59 +1,62 @@
 package main
 
-import (
-	"errors"
-	"fmt"
-)
+import ()
 
 // @param : node who is looking for the node responsible for key
 // @param : key
-func (t *DHTnode) Lookup(arg *ArgLookup, nodeResponsible *DHTnode) error {
+//DEPRECATED
+/*
+func (t *DHTnode) Lookup(arg *ArgLookup, responsibleNode *DHTnode) error {
 
 	//keyByte, _ := hex.DecodeString(arg.Key)
 	fmt.Printf("node id : %s  :::: port : %s", thisNode.Id, thisNode.Port)
 
 	if thisNode.Id == arg.Key {
-		*nodeResponsible = arg.Node
+		*responsibleNode = arg.Node
 		return nil
 		//} else if arg.Node.Successor.Id == arg.Key {
-		//	nodeResponsible = arg.Node.Successor
+		//	responsibleNode = arg.Node.Successor
 		//	return nil
 		//} else if between(arg.Node.IdByte, arg.Node.Successor.IdByte, keyByte) {
-		//	*nodeResponsible = arg.Node
+		//	*responsibleNode = arg.Node
 		//	return nil
 		//} else if bytes.Compare(keyByte, arg.Node.Successor.IdByte) == 1 || bytes.Compare(keyByte, arg.Node.IdByte) == -1 {
 
-		//arg.Node.Successor.Lookup(arg, nodeResponsible)
+		//arg.Node.Successor.Lookup(arg, responsibleNode)
 		//	fmt.Printf("ECHEC")
 	}
 	return errors.New("Lookup failed")
 }
+*/
 
 /* @param : node who is looking for the node responsible for key
 @param : key
 Use thisNode global variable
 */
-func (f *DHTnode) FingerLookup(arg *ArgLookup, nodeResponsible *DHTnode) error {
-
-	fmt.Printf("checking node: %s\n", thisNode.Id)
+/*
+func (self *DHTnode) FingerLookup(arg *ArgLookup, responsibleNode *DHTnode) error {
 
 	targetId := ""
-	nodeResponsible = thisNode
+	*responsibleNode = *self
+	fmt.Println("debut FingerLookup on ", self.Port)
 
-	if between([]byte(thisNode.Predecessor.Id), []byte(thisNode.Id), []byte(arg.Key)) || thisNode.Id == arg.Key { // self is responsible for key
-		*nodeResponsible = *thisNode
+	if between([]byte(self.Predecessor.Id), []byte(self.Id), []byte(arg.Key)) || self.Id == arg.Key { // self is responsible for key
+		fmt.Println("arg.key is between predeccessor.Id et self.id")
+		*responsibleNode = *self
+		fmt.Println("predecessor Id : " + self.Predecessor.Id)
 		return nil
 
 	} else {
 
+		fmt.Println("else statement of FingerLookup")
 		// deciding finger to use by iteration, replace with better algoritm???
 		fingerFound := false
 		i := 0
 		for (!(fingerFound == true)) && (i < 159) {
 
-			if between([]byte(thisNode.Fingers[i].key), []byte(thisNode.Fingers[i+1].key), []byte(arg.Key)) {
+			if between([]byte(self.Fingers[i].key), []byte(self.Fingers[i+1].key), []byte(arg.Key)) {
 
-				targetId = thisNode.Fingers[i].Id
+				targetId = self.Fingers[i].Id
 				fingerFound = true
 
 			} else {
@@ -61,22 +64,23 @@ func (f *DHTnode) FingerLookup(arg *ArgLookup, nodeResponsible *DHTnode) error {
 			}
 		}
 		if !fingerFound {
-			targetId = thisNode.Fingers[159].Id
+			targetId = self.Fingers[159].Id
 		}
 
 		// traversing ring clockwise instead of send request directly via IP of node
-		for !(thisNode.Successor.Id == targetId) {
-			thisNode = thisNode.Successor
+		for !(self.Successor.Id == targetId) {
+			self.Node = *self.Successor
 		}
 
 		// recursive request to closest node pointed to by finger
-		//		*responsibleNode = thisNode.Successor.fingerLookup(arg.Key)
+		*responsibleNode = *self.Successor.lookup(arg.Key)
 		return nil
 	}
-
+	return nil
 }
+*/
 
-func (self *DHTnode) ringLookup(hashedKey string) *DHTnode {
+func (self *DHTnode) ringLookup(hashedKey string) BasicNode {
 
 	nodeFound := false
 	key := []byte(hashedKey)
@@ -89,7 +93,7 @@ func (self *DHTnode) ringLookup(hashedKey string) *DHTnode {
 		if between(id1, id2, key) {
 			nodeFound = true
 		} else {
-			self = self.Successor
+			self.BasicNode = self.Successor
 		}
 	}
 	return self.Successor

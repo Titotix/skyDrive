@@ -2,13 +2,26 @@ package main
 
 import (
 	"encoding/hex"
+	"fmt"
+	"strconv"
 )
 
-type Node struct {
-	Id     string
+type ComparableNode struct {
+	Id   string
+	Ip   string
+	Port string
+}
+
+type BasicNode struct {
+	ComparableNode
 	IdByte []byte
-	Ip     string
-	Port   string
+}
+
+//I can delete pointer on succ et pred
+type Node struct {
+	BasicNode
+	Successor   BasicNode
+	Predecessor BasicNode
 }
 
 type DHTnode struct {
@@ -16,20 +29,20 @@ type DHTnode struct {
 	storagePath    string
 	storageContent string
 	Fingers        []*Finger
-	Predecessor    *DHTnode
-	Successor      *DHTnode
 	//	Predecessors   []*Node // larger index number = further away in ring
 	//	Successors     []*Node // same as above
 	joinViaIp   string
 	joinViaPort string
 }
 
+/*
+//DEPRECATED
 func (self *DHTnode) updateIncorrectFingers() {
 
-	start := self
+	start := self.Node
 	newNode := self
 
-	for start != self.Successor {
+	for start != *self.Successor {
 		for i := 0; i < 160; i++ {
 
 			if self.Fingers[i].key >= newNode.Id {
@@ -42,7 +55,10 @@ func (self *DHTnode) updateIncorrectFingers() {
 		self = self.Successor
 	}
 }
+*/
 
+/*
+DEPRECATED
 func (self *DHTnode) updateAllFingerTables() { // updates all Fingers in fingerTables of all nodes, starts with self
 
 	start := self
@@ -62,9 +78,24 @@ func (self *DHTnode) updateAllFingerTables() { // updates all Fingers in fingerT
 	}
 
 }
+*/
 
-func createNode(port string) *DHTnode {
+func createFirstNode(host string, port string) BasicNode {
+	var firstNode BasicNode
+	firstNode.Port = port
+	firstNode.Ip = host
 
+	id := sha1hash(host + port)
+	idByte, _ := hex.DecodeString(id)
+
+	firstNode.Id = id
+	firstNode.IdByte = idByte
+	return firstNode
+}
+
+func createNode(port string) DHTnode {
+
+	//TODO get ip  addr
 	NodeIp := "localhost"
 	NodePort := port
 
@@ -76,30 +107,22 @@ func createNode(port string) *DHTnode {
 	return node
 }
 
-func makeDHTNode(NodeIp string, NodePort string, joinViaIp string, joinViaPort string) *DHTnode {
+func makeDHTNode(NodeIp string, NodePort string, joinViaIp string, joinViaPort string) DHTnode {
 
 	IdStr := sha1hash(NodeIp + NodePort)
 	IdByte, _ := hex.DecodeString(IdStr)
 
-	simpleNode := Node{IdStr, IdByte, NodeIp, NodePort}
-	node := &DHTnode{simpleNode, "", "", nil, nil, nil, joinViaIp, joinViaPort}
+	basicNode := BasicNode{ComparableNode{IdStr, NodeIp, NodePort}, IdByte}
+	simpleNode := Node{basicNode, *new(BasicNode), *new(BasicNode)}
+	node := DHTnode{simpleNode, "", "", nil, joinViaIp, joinViaPort}
 
-	FingersWanted := 160
-	for i := 0; i < FingersWanted; i++ {
+	for i := 0; i < m; i++ {
 		fingerNumber := i + 1
 		newFingerKey, _ := calcFinger(node.IdByte, fingerNumber, 160)
+		fmt.Println(newFingerKey)
 		newFinger := &Finger{*new(Node), newFingerKey}
 		node.Fingers = append(node.Fingers, newFinger)
 	}
-
-	//newPredecessor0 := &Node{"", nil, "", ""}
-	//newPredecessor1 := &Node{"", nil, "", ""}
-	//newSuccessor0 := &Node{"", nil, "", ""}
-	//newSuccessor1 := &Node{"", nil, "", ""}
-	//node.Predecessors = append(node.Predecessors, newPredecessor0)
-	//node.Predecessors = append(node.Predecessors, newPredecessor1)
-	//node.Successors = append(node.Successors, newSuccessor0)
-	//node.Successors = append(node.Successors, newSuccessor1)
 
 	return node
 }
@@ -226,47 +249,217 @@ func makeDHTNode(NodeIp string, NodePort string, joinViaIp string, joinViaPort s
 //			node.Predecessors[1].Id = self.Predecessors[0].Id[:len(node.Predecessors[0].Id)]
 //			node.Predecessors[1].NodeIp = self.Predecessors[0].NodeIp[:len(node.Predecessors[0].NodeIp)]
 //			node.Predecessors[1].NodePort = self.Predecessors[0].NodePort[:len(node.Predecessors[0].NodePort)]
-//
 //		}
 //	}
-//
 //	//self.updateAllFingerTables()
 //}
 
 /* AddToRing
 Available for rpc
 @arg.FirstNode is the node which nodeAdded
-*/ /*Work in progress
-/*func (t *DHTnode) AddToRing(arg *ArgAddToRing, nodeAdded *DHTnode) error {
-
-}
 */
+//Work in progress
+func (self *DHTnode) join(joinedNode BasicNode) {
+	current := *self
+	if isAlive(joinedNode) {
+		current.initFingerTable(joinedNode)
+		fmt.Println("***** FINI initFingerTable")
+		//current.updateOthers()
+		//current.printRing()
+		//current.printRing()
+		//current.updateOthers()
+		//current.printRing()
+	} else {
+		//First node on the ring
+		for i := 0; i < m; i++ {
+			self.Fingers[i].Node = self.Node
+			self.Fingers[i].Predecessor = self.BasicNode
+			self.Fingers[i].Successor = self.BasicNode
+		}
+		self.Successor = self.BasicNode
+		self.Predecessor = self.BasicNode
+	}
+}
 
-//implem algo from chord doc p6
+//func (self *DHTnode) AddToRing(arg *ArgAddToRing, reply *Node) error {
 
-//Must add case of second node in the ring
+//Must add case of second node in the ring ... OR NOT
 /*
  Initalize Finger[] table for current node
 */
-func (t *DHTnode) initFingerTable(nodeJoined *DHTnode) {
-	//thisNode.Fingers[0].key, _ = calcFingerSha(thisNode.IdByte, 0)
+func (self *DHTnode) initFingerTable(joinedNode BasicNode) {
+	//self.Fingers[0].key, _ = calcFingerSha(self.IdByte, 0)
 
-	//Let's look for responsible node for the first finger
-	successor := *nodeJoined.lookup(thisNode.Fingers[0].key)
-	thisNode.Fingers[0].Node = DHTnodeToNode(successor)
+	//self.basicInit(joinedNode)
+	successor := joinedNode.findSuccessor(self.Fingers[0].key)
+	self.Fingers[0].Node = successor
+	self.Successor = successor.BasicNode
 
-	thisNode.Predecessor = successor.Predecessor
-	//thisNode.Fingers[0].Predecessor = thisNode
+	//findSuccessor give back Predecessor ?
+	//fmt.Println("successor.Pred :" + successor.Predecessor.Id)
+	self.Predecessor = successor.Predecessor
+	self.Fingers[0].Predecessor = self.BasicNode
 
+	self.Successor = successor.BasicNode
+	fmt.Println("initFinger : self :")
+	self.print()
 	for i := 0; i < m-1; i++ {
-		fingerStart, fingerStartByte := calcFingerSha(thisNode.Fingers[i+1].IdByte, i+1)
-		thisNode.Fingers[i+1].key = fingerStart
+		fingerStart, fingerStartByte := calcFingerSha(self.IdByte, i+1)
+		self.Fingers[i+1].key = fingerStart
+		//fingerStartByte := self.Fingers[i+1].key.Byte()
 
-		if between(thisNode.IdByte, thisNode.Fingers[i].IdByte, fingerStartByte) {
-			thisNode.Fingers[i+1] = thisNode.Fingers[i]
+		//If finger i+1 key is between self and node pointed by fingers i
+		if between(self.IdByte, self.Fingers[i].IdByte, fingerStartByte) {
+			//Mean that finger i+1 must point to the same node as finger i
+			self.Fingers[i+1].Node = self.Fingers[i].Node
 		} else {
-			node := *nodeJoined.lookup(fingerStart)
-			thisNode.Fingers[i+1].Node = DHTnodeToNode(node)
+			//otherwise, ask to joinedNOde the successor of finger key i+1
+			self.Fingers[i+1].Node = joinedNode.findSuccessor(self.Fingers[i+1].key)
+			//But if the answer is between self and joinedNode AND finger 's key asked is between joinedNode and self
+			//in this case, joinedNode doesn't know yet self so he is going to  answer wrong
+			if (between(self.IdByte, joinedNode.IdByte, self.Fingers[i+1].IdByte) || self.Fingers[i+1].Id == joinedNode.Id) && between(joinedNode.IdByte, self.IdByte, []byte(self.Fingers[i+1].key)) {
+				//if between(joinedNode.IdByte, self.IdByte, []byte(self.Fingers[i+1].key)) {
+				self.Fingers[i+1].Node = self.Node
+			}
 		}
 	}
+}
+
+//Iniatize successor, predeccessor and finger 1 of new node in ring
+func (self *DHTnode) basicInit(joinedNode BasicNode) {
+
+	//Let's look for responsible node for the first finger
+	successor := joinedNode.findSuccessor(self.Fingers[0].key)
+	self.Fingers[0].Node = successor
+	self.Successor = successor.BasicNode
+
+	//findSuccessor give back Predecessor ?
+	//fmt.Println("successor.Pred :" + successor.Predecessor.Id)
+	self.Predecessor = successor.Predecessor
+	self.Fingers[0].Predecessor = self.BasicNode
+	self.Successor = successor.BasicNode
+}
+
+func (self *DHTnode) updateOthers() {
+	for i := 0; i < m; i++ {
+		//find last node p whose i finger might be self
+		fmt.Println("WTF")
+		lastFinger, _ := calcLastFinger(self.IdByte, i+1)
+		fmt.Println("WTF2")
+		p := self.findPredecessor(lastFinger)
+		fmt.Println("updateOthers self :")
+		//	if self.Id == self.Successor.Id {
+		//		//current node is the second node in the ring
+		//		self.updateFingerTableFirstNode(self.Node, i)
+		//		fmt.Println("p : \n")
+		//		p.print()
+		//	} else {
+
+		fmt.Println("p : \n")
+		p.print()
+		p.updateFingerTable(self.Node, i)
+		//}
+	}
+}
+
+//Useless reply
+func (self *DHTnode) UpdateFingerTableFirstNode(arg *ArgUpdateFingerTable, reply *Node) error {
+	self.Successor = arg.Node.BasicNode
+	self.Predecessor = arg.Node.BasicNode
+
+	if between(self.IdByte, self.Fingers[arg.I].IdByte, arg.Node.IdByte) {
+		self.Fingers[arg.I].Node = arg.Node
+
+		//get first node preceding n
+		fmt.Println("self : " + self.Id)
+		fmt.Println("UpdateFingerTable: self.ip before pred " + self.Ip + ":" + self.Port)
+
+		p := self.Predecessor
+		fmt.Println("UpdateFingerTable: p.pred.ip : " + p.Ip + ":" + p.Port)
+		p.updateFingerTable(arg.Node, arg.I)
+	}
+
+	return nil
+}
+
+// if s is i finger of self, update self.Fingers with s
+//Useless reply parameter, rpc doesn't work without
+func (self *DHTnode) UpdateFingerTable(arg *ArgUpdateFingerTable, reply *Node) error {
+
+	fmt.Println("\n***** Begin UpdateFingerTable " + strconv.Itoa(arg.I) + " Node.Id " + arg.Node.Id)
+
+	if inside(self.IdByte, self.Fingers[arg.I].IdByte, arg.Node.IdByte) {
+		self.Fingers[arg.I].Node = arg.Node
+
+		//get first node preceding n
+		fmt.Println("self : " + self.Id)
+		fmt.Println("UpdateFingerTable: self.ip before pred " + self.Ip + ":" + self.Port)
+		// BUG TODO : self.Predecessor == self,  so infinite loop in the case of the join of the second node
+		p := self.findPredecessor(self.Id)
+		//if self.ComparableNode == self.Predecessor.ComparableNode {
+		//	fmt.Println("EGAL !!!!!!!!!!!!!!!!!!!!!!!!!")
+		//	self.Predecessor = arg.Node.BasicNode
+		//	self.Successor = arg.Node.BasicNode
+		//	p = self.Predecessor
+		//	self.print()
+		//}
+		fmt.Println("UpdateFingerTable: p.pred.ip : " + p.Ip + ":" + p.Port)
+		p.updateFingerTable(arg.Node, arg.I)
+	}
+
+	return nil
+}
+
+func (self *DHTnode) FindPredecessor(arg *ArgLookup, reply *Node) error {
+	predecessor := self
+	idByte := []byte(arg.Key)
+
+	//Hack to use Predecessor instead of Successor
+	if predecessor.Successor.Id == "" {
+
+		fmt.Println("***********µFAIL FindPredecessor cant work properly self.Successor unset")
+		predecessor.print()
+		predecessor.Successor.print()
+		predecessor.Predecessor.print()
+	}
+	for !between(predecessor.IdByte, predecessor.Successor.IdByte, idByte) {
+		predecessor.Node = predecessor.closestPrecedingFinger(arg.Key)
+	}
+	*reply = predecessor.Node
+	return nil
+}
+
+// FindPredecessor need SUccessor and Predecessor in FIngers struct
+func (self *DHTnode) ClosestPrecedingFinger(arg *ArgLookup, reply *Node) error {
+	idByte := []byte(arg.Key)
+	for i := m - 1; i > -1; i-- {
+		if between(self.IdByte, idByte, self.Fingers[i].IdByte) {
+			*reply = self.Fingers[i].Node
+			return nil
+		}
+	}
+	*reply = self.Node
+	return nil
+}
+
+func (self *DHTnode) FindSuccessor(arg *ArgLookup, reply *Node) error {
+	predecessor := self.findPredecessor(arg.Key)
+	fmt.Println("\nasked :" + arg.Key)
+	new := predecessor.BasicNode
+	new.print()
+	reply.Predecessor = predecessor.BasicNode
+	//fmt.Println("reply :" + reply.Id + "reply pred " + reply.Predecessor.Id)
+	reply.BasicNode = predecessor.Successor
+	fmt.Println("\nreply :")
+	reply.print()
+	return nil
+}
+
+func (self *DHTnode) isMyFinger(node Finger) bool {
+	for i := 0; i < m; i++ {
+		if self.Fingers[i].ComparableNode == node.ComparableNode {
+			return true
+		}
+	}
+	return false
 }

@@ -2,7 +2,8 @@ package main
 
 type Finger struct {
 	Node
-	key string
+	key     string
+	keyByte []byte
 }
 
 func (self Finger) update() {

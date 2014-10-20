@@ -120,6 +120,7 @@ func (self *Node) print() {
 
 func (self *Finger) print() {
 	fmt.Println("finger key:" + self.key)
+	printIdByte(self.keyByte)
 	self.Node.print()
 }
 
@@ -141,6 +142,14 @@ func (self *BasicNode) printIdByte() {
 	fmt.Printf("IdByte :")
 	for i := 0; i < len(self.IdByte); i++ {
 		fmt.Printf("%x", self.IdByte[i])
+	}
+	fmt.Printf("\n")
+}
+
+func printIdByte(idByte []byte) {
+	fmt.Printf("IdByte :")
+	for i := 0; i < len(idByte); i++ {
+		fmt.Printf("%x", idByte[i])
 	}
 	fmt.Printf("\n")
 }

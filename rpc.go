@@ -7,7 +7,8 @@ import (
 )
 
 type ArgLookup struct {
-	Key string
+	Key     string
+	KeyByte []byte
 }
 
 type ArgAddToRing struct {
@@ -41,10 +42,10 @@ func (self *DHTnode) callLookup(clientSocket *rpc.Client, arg *ArgLookup) *DHTno
 
 //Abstract callLookup method
 // nodeTarget is the node where rpc is computed
-func (nodeTarget *DHTnode) lookup(keyTarget string) *DHTnode {
+func (nodeTarget *DHTnode) lookup(keyTarget string, keyByte []byte) *DHTnode {
 
 	clientSocket := connect(nodeTarget.Ip, nodeTarget.Port)
-	arg := ArgLookup{keyTarget}
+	arg := ArgLookup{keyTarget, keyByte}
 	reply := nodeTarget.callLookup(clientSocket, &arg)
 	clientSocket.Close()
 	return reply

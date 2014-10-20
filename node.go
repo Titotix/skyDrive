@@ -119,7 +119,8 @@ func makeDHTNode(NodeIp string, NodePort string, joinViaIp string, joinViaPort s
 	for i := 0; i < m; i++ {
 		fingerNumber := i + 1
 		newFingerKey, newFingerKeyByte := calcFinger(node.IdByte, fingerNumber, 160)
-		fmt.Println(newFingerKey)
+		fmt.Println("           " + newFingerKey)
+		printIdByte(newFingerKeyByte)
 		newFinger := &Finger{*new(Node), newFingerKey, newFingerKeyByte}
 		node.Fingers = append(node.Fingers, newFinger)
 	}
@@ -263,12 +264,9 @@ func (self *DHTnode) join(joinedNode BasicNode) {
 	current := *self
 	if isAlive(joinedNode) {
 		current.initFingerTable(joinedNode)
-		fmt.Println("***** FINI initFingerTable")
+		fmt.Println("***** FINI initFingerTable *********** \n \n ******")
+		current.printFingers()
 		current.updateOthers()
-		//current.printRing()
-		//current.printRing()
-		//current.updateOthers()
-		//current.printRing()
 	} else {
 		//First node on the ring
 		for i := 0; i < m; i++ {
@@ -304,12 +302,9 @@ func (self *DHTnode) initFingerTable(joinedNode BasicNode) {
 	fmt.Println("initFinger : self :")
 	self.print()
 	for i := 0; i < m-1; i++ {
-		fingerStart, fingerStartByte := calcFingerSha(self.IdByte, i+1)
-		self.Fingers[i+1].key = fingerStart
-		//fingerStartByte := self.Fingers[i+1].key.Byte()
 
 		//If finger i+1 key is between self and node pointed by fingers i
-		if between(self.IdByte, self.Fingers[i].IdByte, fingerStartByte) {
+		if between(self.IdByte, self.Fingers[i].IdByte, self.Fingers[i+1].keyByte) {
 			//Mean that finger i+1 must point to the same node as finger i
 			self.Fingers[i+1].Node = self.Fingers[i].Node
 		} else {

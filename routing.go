@@ -1,6 +1,9 @@
 package main
 
-import ()
+import (
+	"encoding/hex"
+	"log"
+)
 
 // @param : node who is looking for the node responsible for key
 // @param : key
@@ -83,12 +86,15 @@ func (self *DHTnode) FingerLookup(arg *ArgLookup, responsibleNode *DHTnode) erro
 func (self *DHTnode) ringLookup(hashedKey string) BasicNode {
 
 	nodeFound := false
-	key := []byte(hashedKey)
+	key, err := hex.DecodeString(hashedKey)
+	if err != nil {
+		log.Fatal("decodeString :", err)
+	}
 
 	for nodeFound == false {
 
-		id1 := []byte(self.Id)
-		id2 := []byte(self.Successor.Id)
+		id1 := (self.IdByte)
+		id2 := (self.Successor.IdByte)
 
 		if between(id1, id2, key) {
 			nodeFound = true

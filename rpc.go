@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/hex"
 	"fmt"
 	"log"
 	"net/rpc"
@@ -110,6 +111,11 @@ func (nodeTarget *BasicNode) findSuccessor(key string) Node {
 
 	arg := new(ArgLookup)
 	arg.Key = key
+	keyByte, err := hex.DecodeString(key)
+	if err != nil {
+		log.Fatal("findSuccessor conversion error:", err)
+	}
+	arg.KeyByte = keyByte
 	if nodeTarget.Id == thisNode.Id {
 		// execute in local
 		reply := new(Node)
@@ -136,6 +142,11 @@ func (nodeTarget *DHTnode) findPredecessor(key string) Node {
 
 	arg := new(ArgLookup)
 	arg.Key = key
+	keyByte, err := hex.DecodeString(key)
+	if err != nil {
+		log.Fatal("findPredecessor ERROR DecodeString", err)
+	}
+	arg.KeyByte = keyByte
 	if nodeTarget.Id == thisNode.Id {
 		// execute in local
 		reply := new(Node)
@@ -162,6 +173,11 @@ func (nodeTarget *DHTnode) closestPrecedingFinger(key string) Node {
 
 	arg := new(ArgLookup)
 	arg.Key = key
+	keyByte, err := hex.DecodeString(key)
+	if err != nil {
+		log.Fatal("closestPrecedingFinger ERROR DecodeString", err)
+	}
+	arg.KeyByte = keyByte
 	if nodeTarget.Id == thisNode.Id {
 		// execute in local
 		reply := new(Node)

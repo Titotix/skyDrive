@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"strconv"
+	"time"
 )
 
 type ComparableNode struct {
@@ -261,12 +262,11 @@ Available for rpc
 */
 //Work in progress
 func (self *DHTnode) join(joinedNode BasicNode) {
-	current := *self
 	if isAlive(joinedNode) {
-		current.initFingerTable(joinedNode)
+		self.initFingerTable(joinedNode)
 		fmt.Println("***** FINI initFingerTable *********** \n \n ******")
-		current.printFingers()
-		current.updateOthers()
+		self.printFingers()
+		self.updateOthers()
 	} else {
 		//First node on the ring
 		for i := 0; i < m; i++ {
@@ -301,6 +301,7 @@ func (self *DHTnode) initFingerTable(joinedNode BasicNode) {
 	self.Successor = successor.BasicNode
 	fmt.Println("initFinger : self :")
 	self.print()
+	thisNode.print()
 	for i := 0; i < m-1; i++ {
 
 		//If finger i+1 key is between self and node pointed by fingers i
@@ -318,6 +319,7 @@ func (self *DHTnode) initFingerTable(joinedNode BasicNode) {
 			}
 		}
 	}
+	fmt.Println("fin initfingertablethisNODE:" + thisNode.Id)
 }
 
 //Iniatize successor, predeccessor and finger 1 of new node in ring
@@ -338,11 +340,8 @@ func (self *DHTnode) basicInit(joinedNode BasicNode) {
 func (self *DHTnode) updateOthers() {
 	for i := 0; i < m; i++ {
 		//find last node p whose i finger might be self
-		fmt.Println("WTF")
 		lastFinger, _ := calcLastFinger(self.IdByte, i+1)
-		fmt.Println("WTF2")
 		p := self.findPredecessor(lastFinger)
-		fmt.Println("updateOthers self :")
 		//	if self.Id == self.Successor.Id {
 		//		//current node is the second node in the ring
 		//		self.updateFingerTableFirstNode(self.Node, i)
@@ -350,9 +349,11 @@ func (self *DHTnode) updateOthers() {
 		//		p.print()
 		//	} else {
 
-		fmt.Println("p : \n")
-		p.print()
-		p.updateFingerTable(self.Node, i)
+		//fmt.Println("p : \n")
+		//p.print()
+		//fmt.Println("SELF : *****")
+		//self.print()
+		p.updateFingerTable(thisNode.Node, i)
 		//}
 	}
 }
@@ -382,23 +383,28 @@ func (self *DHTnode) UpdateFingerTableFirstNode(arg *ArgUpdateFingerTable, reply
 func (self *DHTnode) UpdateFingerTable(arg *ArgUpdateFingerTable, reply *Node) error {
 
 	fmt.Println("\n***** Begin UpdateFingerTable " + strconv.Itoa(arg.I) + " Node.Id " + arg.Node.Id)
-
-	if inside(self.IdByte, self.Fingers[arg.I].IdByte, arg.Node.IdByte) {
+	fmt.Printf("arg.Node.IdBYte :%x %x %x", arg.Node.IdByte, self.IdByte, self.Fingers[arg.I].IdByte)
+	if between(self.IdByte, self.Fingers[arg.I].IdByte, arg.Node.IdByte) {
+		fmt.Printf("arg.Node.IdBYte :%x ", arg.Node.IdByte)
 		self.Fingers[arg.I].Node = arg.Node
 
-		//get first node preceding n
-		fmt.Println("self : " + self.Id)
+		fmt.Println("self : ")
+		self.print()
 		fmt.Println("UpdateFingerTable: self.ip before pred " + self.Ip + ":" + self.Port)
+		//get first node preceding n
 		// BUG TODO : self.Predecessor == self,  so infinite loop in the case of the join of the second node
-		p := self.findPredecessor(self.Id)
+		p := self.Predecessor
+		fmt.Println("p : ")
+		p.print()
 		if self.ComparableNode == self.Predecessor.ComparableNode {
 			fmt.Println("EGAL !!!!!!!!!!!!!!!!!!!!!!!!!")
 			self.Predecessor = arg.Node.BasicNode
 			self.Successor = arg.Node.BasicNode
-			p.BasicNode = self.Predecessor
-			self.print()
+			self.Predecessor.print()
+			p = self.Predecessor
 		}
 		fmt.Println("UpdateFingerTable: p.pred.ip : " + p.Ip + ":" + p.Port)
+		p.print()
 		p.updateFingerTable(arg.Node, arg.I)
 	}
 
@@ -406,19 +412,18 @@ func (self *DHTnode) UpdateFingerTable(arg *ArgUpdateFingerTable, reply *Node) e
 }
 
 func (self *DHTnode) FindPredecessor(arg *ArgLookup, reply *Node) error {
-	predecessor := self
+	predecessor := *self
 
-	idByte := arg.KeyByte
-	printIdByte(idByte)
-
-	fmt.Println("FindPredecessor")
-	//Hack to use Predecessor instead of Successor
 	if predecessor.Successor.Id == "" {
 
 		fmt.Println("***********µFAIL FindPredecessor cant work properly self.Successor unset")
 		predecessor.print()
 	}
-	for !between(predecessor.IdByte, predecessor.Successor.IdByte, idByte) {
+	//Hack to use Predecessor instead of Successor
+	predecessor.print()
+	//doesnt not respet doc algo TODO BUG
+	//Fixed, to test...
+	for !between(predecessor.IdByte, predecessor.Successor.IdByte, arg.KeyByte) && arg.Key != predecessor.Successor.Id {
 		predecessor.Node = predecessor.closestPrecedingFinger(arg.Key)
 	}
 	*reply = predecessor.Node
@@ -428,8 +433,10 @@ func (self *DHTnode) FindPredecessor(arg *ArgLookup, reply *Node) error {
 // FindPredecessor need SUccessor and Predecessor in FIngers struct
 func (self *DHTnode) ClosestPrecedingFinger(arg *ArgLookup, reply *Node) error {
 	idByte := arg.KeyByte
+	fmt.Println("arg.Key :" + arg.Key)
+	printIdByte(arg.KeyByte)
 	for i := m - 1; i > -1; i-- {
-		if between(self.IdByte, idByte, self.Fingers[i].IdByte) {
+		if inside(self.IdByte, idByte, self.Fingers[i].IdByte) {
 			*reply = self.Fingers[i].Node
 			return nil
 		}
@@ -440,7 +447,7 @@ func (self *DHTnode) ClosestPrecedingFinger(arg *ArgLookup, reply *Node) error {
 
 func (self *DHTnode) FindSuccessor(arg *ArgLookup, reply *Node) error {
 	predecessor := self.findPredecessor(arg.Key)
-	fmt.Println("\nasked :" + arg.Key)
+	fmt.Println("\n**asked :" + arg.Key)
 	new := predecessor.BasicNode
 	new.print()
 	reply.Predecessor = predecessor.BasicNode
@@ -459,3 +466,9 @@ func (self *DHTnode) isMyFinger(node Finger) bool {
 	}
 	return false
 }
+
+//func (self *DHTnode) getPredecessor() BasicNode {
+//	for i:= m-1; i > -1; i-- {
+//		if self.Fingers[i].Id != self.Id {
+//			if self.Fingers[i].Node.findSuccessor(self.Fingers[i].Id)
+//

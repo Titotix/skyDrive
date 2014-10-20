@@ -139,14 +139,11 @@ func (self *DHTnode) printFingers() {
 }
 
 func (self *BasicNode) printIdByte() {
-	fmt.Printf("IdByte :")
 	fmt.Printf("%x", self.IdByte)
 	fmt.Printf("\n")
 }
 
 func printIdByte(idByte []byte) {
-	fmt.Printf("IdByte :")
-	fmt.Printf("   ")
 	fmt.Printf("%x", idByte)
 	fmt.Printf("\n")
 }

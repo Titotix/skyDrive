@@ -382,14 +382,9 @@ func (self *DHTnode) UpdateFingerTableFirstNode(arg *ArgUpdateFingerTable, reply
 func (self *DHTnode) UpdateFingerTable(arg *ArgUpdateFingerTable, reply *Node) error {
 
 	fmt.Println("\n***** Begin UpdateFingerTable " + strconv.Itoa(arg.I) + " Node.Id " + arg.Node.Id)
-	fmt.Printf("arg.Node.IdBYte :%x %x %x", arg.Node.IdByte, self.IdByte, self.Fingers[arg.I].IdByte)
 	if between(self.IdByte, self.Fingers[arg.I].IdByte, arg.Node.IdByte) {
-		fmt.Printf("arg.Node.IdBYte :%x ", arg.Node.IdByte)
 		self.Fingers[arg.I].Node = arg.Node
 
-		fmt.Println("self : ")
-		self.print()
-		fmt.Println("UpdateFingerTable: self.ip before pred " + self.Ip + ":" + self.Port)
 		//get first node preceding n
 		// BUG TODO : self.Predecessor == self,  so infinite loop in the case of the join of the second node
 		p := self.Predecessor

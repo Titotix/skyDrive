@@ -50,7 +50,6 @@ func main() {
 	thisNode.join(firstNode)
 	//Enable listening for rpc
 	thisNode.listenHTTP(nodePort)
-	fmt.Printf("listenHTTP done !")
 
 	thisNode.printFingers()
 	fmt.Printf("\nThis node:\n")

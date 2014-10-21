@@ -90,11 +90,16 @@ func (nodeTarget *BasicNode) updateFingerTableFirstNode(s Node, i int) {
 	arg := new(ArgUpdateFingerTable)
 	arg.Node = s
 	arg.I = i
-	fmt.Println("updateFingerTableFirstNode :thisNode.Id " + thisNode.Id)
-
-	clientSocket := connect(nodeTarget.Ip, nodeTarget.Port)
-	callUpdateFingerTableFirstNode(clientSocket, arg)
-	clientSocket.Close()
+	if nodeTarget.Id == thisNode.Id {
+		// execute in local
+		fmt.Println("exec in local")
+		reply := new(Node)
+		_ = thisNode.UpdateFingerTableFirstNode(arg, reply)
+	} else {
+		clientSocket := connect(nodeTarget.Ip, nodeTarget.Port)
+		callUpdateFingerTable(clientSocket, arg)
+		clientSocket.Close()
+	}
 }
 
 func callFindSuccessor(clientSocket *rpc.Client, arg *ArgLookup) *Node {

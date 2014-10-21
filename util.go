@@ -3,7 +3,9 @@ package main
 import (
 	"bytes"
 	"crypto/sha1"
+	"encoding/hex"
 	"fmt"
+	"log"
 	"math/big"
 )
 
@@ -103,6 +105,26 @@ func calcFinger(n []byte, k int, m int) (string, []byte) {
 
 func calcFingerSha(n []byte, k int) (string, []byte) {
 	return calcFinger(n, k, m)
+}
+
+func add(id string, added int64) (string, []byte) {
+
+	idByte, err := hex.DecodeString(id)
+	if err != nil {
+		log.Fatal("decodeString error :", err)
+	}
+
+	idBigInt := big.Int{}
+	idBigInt.SetBytes(idByte)
+
+	// calculate sum
+	sum := big.Int{}
+	addInt := big.NewInt(added)
+	sum.Add(&idBigInt, addInt)
+
+	resultBytes := sum.Bytes()
+	resultHex := fmt.Sprintf("%x", resultBytes)
+	return resultHex, resultBytes
 }
 
 // (n - 2^(k-1)) mod 2^m

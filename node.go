@@ -119,8 +119,6 @@ func makeDHTNode(NodeIp string, NodePort string, joinViaIp string, joinViaPort s
 	for i := 0; i < m; i++ {
 		fingerNumber := i + 1
 		newFingerKey, newFingerKeyByte := calcFinger(node.IdByte, fingerNumber, 160)
-		fmt.Println("           " + newFingerKey)
-		printIdByte(newFingerKeyByte)
 		newFinger := &Finger{*new(Node), newFingerKey, newFingerKeyByte}
 		node.Fingers = append(node.Fingers, newFinger)
 	}
@@ -359,7 +357,6 @@ func (self *DHTnode) updateOthers() {
 // if s is i finger of self, update self.Fingers with s
 //Useless reply parameter, rpc doesn't work without
 func (self *DHTnode) UpdateFingerTable(arg *ArgUpdateFingerTable, reply *Node) error {
-	return nil
 
 	fmt.Println("\n***** Begin UpdateFingerTable " + strconv.Itoa(arg.I) + " Node.Id " + arg.Node.Id)
 	if between(self.IdByte, self.Fingers[arg.I].IdByte, arg.Node.IdByte) {

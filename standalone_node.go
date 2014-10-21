@@ -52,6 +52,7 @@ func main() {
 	thisNode.listenHTTP(nodePort)
 
 	thisNode.printFingers()
+	printRing(*thisNode)
 	fmt.Printf("\nThis node:\n")
 	thisNode.print()
 	fmt.Println("\nSearch for key: ")

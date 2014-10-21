@@ -311,7 +311,7 @@ func (self *DHTnode) initFingerTable(joinedNode BasicNode) {
 			}
 		}
 	}
-	//self.initFingerSuccessor(joinedNode)
+	self.initFingerSuccessor(joinedNode)
 }
 
 //TODO
@@ -353,7 +353,7 @@ func (self *DHTnode) updateOthers() {
 		p := self.findPredecessor(lastFinger)
 
 		//Too lazy to go deep in UpdateFingerTable. If execute itself, false the last fingers.
-		if p.Id != self.Id {
+		if p.Id != self.Id /* && p.Id != self.Id*/ {
 			p.updateFingerTable(self.Node, i)
 		}
 	}
@@ -363,23 +363,33 @@ func (self *DHTnode) updateOthers() {
 //Useless reply parameter, rpc doesn't work without
 func (self *DHTnode) UpdateFingerTable(arg *ArgUpdateFingerTable, reply *Node) error {
 
-	if between(self.IdByte, self.Fingers[arg.I].IdByte, arg.Node.IdByte) {
-		self.Fingers[arg.I].Node = arg.Node
+	fmt.Printf("\nUpdate finger %d (key : %s )  avec %s", arg.I+1, self.Fingers[arg.I].key, arg.Node.Id)
+	fmt.Printf("\nfinger pointe sur %s", self.Fingers[arg.I].Id)
+	argIdByte, err := hex.DecodeString(arg.Node.Id)
+	if err != nil {
+		log.Fatal("err DecodeString in UpdateFingerTable :", err)
+	}
+	//Update finger with arg.Node  only if finger key is between self and arg.Node
+	if between(self.IdByte, argIdByte, self.Fingers[arg.I].keyByte) {
+		if between(self.IdByte, self.Fingers[arg.I].IdByte, arg.Node.IdByte) {
+			fmt.Println("\nDO IT !")
+			self.Fingers[arg.I].Node = arg.Node
 
-		//get first node preceding n
-		p := self.Predecessor
-		if self.ComparableNode == self.Predecessor.ComparableNode {
-			self.Predecessor = arg.Node.BasicNode
-			self.Successor = arg.Node.BasicNode
-			p = self.Predecessor
-		} //else {
+			//get first node preceding n
+			p := self.Predecessor
+			if self.ComparableNode == self.Predecessor.ComparableNode {
+				self.Predecessor = arg.Node.BasicNode
+				self.Successor = arg.Node.BasicNode
+				p = self.Predecessor
+			} //else {
 
-		//Stop recursive updatefingerTale if self.Predecessor is the node who is updating Others
-		if p.Id != arg.Node.Id {
-			p.updateFingerTable(arg.Node, arg.I)
+			//Stop recursive updatefingerTale if self.Predecessor is the node who is updating Others
+			if p.Id != arg.Node.Id /* && p.Id != self.Id*/ {
+				p.updateFingerTable(arg.Node, arg.I)
+			}
+			return nil
+			//}
 		}
-		return nil
-		//}
 	}
 
 	return nil
@@ -401,7 +411,7 @@ func (self *DHTnode) UpdateFingerTableFirstNode(arg *ArgUpdateFingerTable, reply
 		//fmt.Println("UpdateFingerTable: p.pred.ip : " + p.Ip + ":" + p.Port)
 
 		//Stop recursive updatefingerTale if self.Predecessor is the node who is updating Others
-		if p.Id != arg.Node.Id {
+		if p.Id != arg.Node.Id /*&& p.Id != self.Id*/ {
 			p.updateFingerTable(arg.Node, arg.I)
 		}
 	}

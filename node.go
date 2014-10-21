@@ -337,7 +337,8 @@ func (self *DHTnode) basicInit(joinedNode BasicNode) {
 }
 
 func (self *DHTnode) updateOthers() {
-	for i := 0; i < m; i++ {
+	var i int
+	for i = 0; i < m; i++ {
 		//find last node p whose i finger might be self
 		lastFinger, _ := calcLastFinger(self.IdByte, i+1)
 		p := self.findPredecessor(lastFinger)
@@ -348,13 +349,46 @@ func (self *DHTnode) updateOthers() {
 		//		p.print()
 		//	} else {
 
-		//fmt.Println("p : \n")
-		//p.print()
-		//fmt.Println("SELF : *****")
-		//self.print()
-		p.updateFingerTable(thisNode.Node, i)
+		fmt.Printf("i = %d", i)
+		thisNode.print()
+		p.updateFingerTable(self.Node, i)
 		//}
 	}
+}
+
+// if s is i finger of self, update self.Fingers with s
+//Useless reply parameter, rpc doesn't work without
+func (self *DHTnode) UpdateFingerTable(arg *ArgUpdateFingerTable, reply *Node) error {
+	return nil
+
+	fmt.Println("\n***** Begin UpdateFingerTable " + strconv.Itoa(arg.I) + " Node.Id " + arg.Node.Id)
+	if between(self.IdByte, self.Fingers[arg.I].IdByte, arg.Node.IdByte) {
+		self.Fingers[arg.I].Node = arg.Node
+
+		//get first node preceding n
+		// BUG TODO : self.Predecessor == self,  so infinite loop in the case of the join of the second node
+		p := self.Predecessor
+		if self.ComparableNode == self.Predecessor.ComparableNode {
+			self.Predecessor = arg.Node.BasicNode
+			self.Successor = arg.Node.BasicNode
+			p = self.Predecessor
+			//return nil
+			//BUG else put the mess in rpc about gob...
+		} //else {
+
+		fmt.Println("UpdateFingerTable lance updateFingerTable")
+
+		//Stop recursive updatefingerTale if self.Predecessor is the node who is updating Others
+		if p.Id != arg.Node.Id {
+			fmt.Println("if UpdateFingerTable")
+			p.updateFingerTable(arg.Node, arg.I)
+		}
+		fmt.Println("Fin UpdateFingerTable")
+		return nil
+		//}
+	}
+
+	return nil
 }
 
 //Useless reply
@@ -371,35 +405,11 @@ func (self *DHTnode) UpdateFingerTableFirstNode(arg *ArgUpdateFingerTable, reply
 
 		p := self.Predecessor
 		fmt.Println("UpdateFingerTable: p.pred.ip : " + p.Ip + ":" + p.Port)
-		p.updateFingerTable(arg.Node, arg.I)
-	}
 
-	return nil
-}
-
-// if s is i finger of self, update self.Fingers with s
-//Useless reply parameter, rpc doesn't work without
-func (self *DHTnode) UpdateFingerTable(arg *ArgUpdateFingerTable, reply *Node) error {
-
-	fmt.Println("\n***** Begin UpdateFingerTable " + strconv.Itoa(arg.I) + " Node.Id " + arg.Node.Id)
-	if between(self.IdByte, self.Fingers[arg.I].IdByte, arg.Node.IdByte) {
-		self.Fingers[arg.I].Node = arg.Node
-
-		//get first node preceding n
-		// BUG TODO : self.Predecessor == self,  so infinite loop in the case of the join of the second node
-		p := self.Predecessor
-		fmt.Println("p : ")
-		p.print()
-		if self.ComparableNode == self.Predecessor.ComparableNode {
-			fmt.Println("EGAL !!!!!!!!!!!!!!!!!!!!!!!!!")
-			self.Predecessor = arg.Node.BasicNode
-			self.Successor = arg.Node.BasicNode
-			self.Predecessor.print()
-			p = self.Predecessor
+		//Stop recursive updatefingerTale if self.Predecessor is the node who is updating Others
+		if p.Id != arg.Node.Id {
+			p.updateFingerTable(arg.Node, arg.I)
 		}
-		fmt.Println("UpdateFingerTable: p.pred.ip : " + p.Ip + ":" + p.Port)
-		p.print()
-		p.updateFingerTable(arg.Node, arg.I)
 	}
 
 	return nil

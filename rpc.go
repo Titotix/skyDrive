@@ -53,7 +53,7 @@ func (nodeTarget *DHTnode) lookup(keyTarget string, keyByte []byte) *DHTnode {
 }
 
 func callUpdateFingerTable(clientSocket *rpc.Client, arg *ArgUpdateFingerTable) {
-	var reply int
+	var reply Node
 	err := clientSocket.Call("DHTnode.UpdateFingerTable", arg, &reply)
 	if err != nil {
 		log.Fatal("remote updateFingerTable error:", err)
@@ -65,10 +65,9 @@ func (nodeTarget *BasicNode) updateFingerTable(s Node, i int) {
 	arg := new(ArgUpdateFingerTable)
 	arg.Node = s
 	arg.I = i
-	fmt.Println("updateFingerTable :thisNode.Id " + thisNode.Id)
 	if nodeTarget.Id == thisNode.Id {
 		// execute in local
-		fmt.Println("exec in local. thisNode:" + thisNode.Id + "\nnodeTarget" + nodeTarget.Id)
+		fmt.Println("exec in local")
 		reply := new(Node)
 		_ = thisNode.UpdateFingerTable(arg, reply)
 	} else {

@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/hex"
 	"fmt"
-	"strconv"
+	"log"
 )
 
 type ComparableNode struct {
@@ -261,8 +261,6 @@ Available for rpc
 func (self *DHTnode) join(joinedNode BasicNode) {
 	if isAlive(joinedNode) {
 		self.initFingerTable(joinedNode)
-		fmt.Println("***** FINI initFingerTable *********** \n \n ******")
-		self.printFingers()
 		self.updateOthers()
 	} else {
 		//First node on the ring
@@ -291,14 +289,10 @@ func (self *DHTnode) initFingerTable(joinedNode BasicNode) {
 	self.Successor = successor.BasicNode
 
 	//findSuccessor give back Predecessor ?
-	//fmt.Println("successor.Pred :" + successor.Predecessor.Id)
+	fmt.Println("successor.Pred :" + successor.Predecessor.Id)
 	self.Predecessor = successor.Predecessor
 	self.Fingers[0].Predecessor = self.BasicNode
 
-	self.Successor = successor.BasicNode
-	fmt.Println("initFinger : self :")
-	self.print()
-	thisNode.print()
 	for i := 0; i < m-1; i++ {
 
 		//If finger i+1 key is between self and node pointed by fingers i
@@ -316,8 +310,10 @@ func (self *DHTnode) initFingerTable(joinedNode BasicNode) {
 			}
 		}
 	}
-	fmt.Println("fin initfingertablethisNODE:" + thisNode.Id)
 }
+
+//TODO
+//func (self *DHTnode) initFingerSuccessor() {
 
 //Iniatize successor, predeccessor and finger 1 of new node in ring
 func (self *DHTnode) basicInit(joinedNode BasicNode) {
@@ -358,29 +354,22 @@ func (self *DHTnode) updateOthers() {
 //Useless reply parameter, rpc doesn't work without
 func (self *DHTnode) UpdateFingerTable(arg *ArgUpdateFingerTable, reply *Node) error {
 
-	fmt.Println("\n***** Begin UpdateFingerTable " + strconv.Itoa(arg.I) + " Node.Id " + arg.Node.Id)
 	if between(self.IdByte, self.Fingers[arg.I].IdByte, arg.Node.IdByte) {
 		self.Fingers[arg.I].Node = arg.Node
 
 		//get first node preceding n
-		// BUG TODO : self.Predecessor == self,  so infinite loop in the case of the join of the second node
 		p := self.Predecessor
 		if self.ComparableNode == self.Predecessor.ComparableNode {
 			self.Predecessor = arg.Node.BasicNode
 			self.Successor = arg.Node.BasicNode
 			p = self.Predecessor
-			//return nil
-			//BUG else put the mess in rpc about gob...
 		} //else {
-
-		fmt.Println("UpdateFingerTable lance updateFingerTable")
 
 		//Stop recursive updatefingerTale if self.Predecessor is the node who is updating Others
 		if p.Id != arg.Node.Id {
 			fmt.Println("if UpdateFingerTable")
 			p.updateFingerTable(arg.Node, arg.I)
 		}
-		fmt.Println("Fin UpdateFingerTable")
 		return nil
 		//}
 	}
@@ -416,18 +405,15 @@ func (self *DHTnode) FindPredecessor(arg *ArgLookup, reply *Node) error {
 	predecessor := *self
 
 	if predecessor.Successor.Id == "" {
-
-		fmt.Println("***********µFAIL FindPredecessor cant work properly self.Successor unset")
-		predecessor.print()
+		log.Fatal("self.Successor unset in FindPredecessor")
 	}
-	//Hack to use Predecessor instead of Successor
-	predecessor.print()
-	//doesnt not respet doc algo TODO BUG
-	//Fixed, to test...
-	for !between(predecessor.IdByte, predecessor.Successor.IdByte, arg.KeyByte) && arg.Key != predecessor.Successor.Id {
+	for !between2(predecessor.IdByte, predecessor.Successor.IdByte, arg.KeyByte) {
 		predecessor.Node = predecessor.closestPrecedingFinger(arg.Key)
 	}
 	*reply = predecessor.Node
+	if reply.Id == "" {
+		log.Fatal("FindPredecessor error : reply is empty")
+	}
 	return nil
 }
 
@@ -439,10 +425,16 @@ func (self *DHTnode) ClosestPrecedingFinger(arg *ArgLookup, reply *Node) error {
 	for i := m - 1; i > -1; i-- {
 		if inside(self.IdByte, idByte, self.Fingers[i].IdByte) {
 			*reply = self.Fingers[i].Node
+			if reply.Id == "" {
+				log.Fatal("ClosestPrecedingFinger error : reply is empty")
+			}
 			return nil
 		}
 	}
 	*reply = self.Node
+	if reply.Id == "" {
+		log.Fatal("ClosestPrecedingFinger error : reply is empty")
+	}
 	return nil
 }
 
@@ -453,9 +445,13 @@ func (self *DHTnode) FindSuccessor(arg *ArgLookup, reply *Node) error {
 	new.print()
 	reply.Predecessor = predecessor.BasicNode
 	//fmt.Println("reply :" + reply.Id + "reply pred " + reply.Predecessor.Id)
+	//TODO BUG les fingers ne comportent pas leur Successor !
 	reply.BasicNode = predecessor.Successor
 	fmt.Println("\nreply :")
 	reply.print()
+	if reply.Id == "" {
+		log.Fatal("FindSuccessor error : reply is empty")
+	}
 	return nil
 }
 

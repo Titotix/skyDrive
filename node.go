@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/hex"
 	"fmt"
 	"log"
@@ -261,6 +262,7 @@ Available for rpc
 func (self *DHTnode) join(joinedNode BasicNode) {
 	if isAlive(joinedNode) {
 		self.initFingerTable(joinedNode)
+		self.printFingers()
 		self.updateOthers()
 	} else {
 		//First node on the ring
@@ -316,15 +318,51 @@ func (self *DHTnode) initFingerTable(joinedNode BasicNode) {
 //TODO
 func (self *DHTnode) initFingerSuccessor(joinedNode BasicNode) {
 	for i := 0; i < m; i++ {
+		//If finger I point to self node, assign self succcessor to finger successor
 		if self.Fingers[i].Id == self.Id {
 			self.Fingers[i].Successor = self.Successor
-		}
-		next, _ := add(self.Fingers[i].Id, 1)
-		successor := joinedNode.findSuccessor(next)
-		if successor.Id != joinedNode.Id {
-			self.Fingers[i].Successor = successor.BasicNode
-		} else if self.Fingers[i].Id != self.Id {
-			self.Fingers[i].Successor = self.BasicNode
+		} else {
+			next, _ := add(self.Fingers[i].Id, 1)
+			successor := joinedNode.findSuccessor(next)
+
+			fmt.Println("successor : ")
+			//TODO BUG successor est tjrs joinedNOde lorsque finger i id est joinedNode
+			successor.print()
+			// if finger i key is after joinedNode or equal
+			if between(joinedNode.IdByte, self.IdByte, self.Fingers[i].keyByte) {
+
+				//If findSuccessor answer node after self, assign self as self.Fingers i+1 successor
+				if between(self.IdByte, joinedNode.IdByte, successor.IdByte) {
+					self.Fingers[i].Successor = self.BasicNode
+				} else {
+					self.Fingers[i].Successor = successor.BasicNode
+				}
+				// if finger key is before joinedNode
+			} else {
+				//if finger i point to joinedNode
+				if self.Fingers[i].Id == joinedNode.Id {
+					// And findSucc is after self
+					if bytes.Compare(successor.IdByte, self.IdByte) == +1 {
+						//Take self as finger i successor
+						self.Fingers[i].Successor = self.BasicNode
+					} else {
+						//Handle case of second node join
+						if successor.Id != joinedNode.Id {
+
+							self.Fingers[i].Successor = successor.BasicNode
+						} else {
+							self.Fingers[i].Successor = self.BasicNode
+						}
+					}
+				} else {
+					self.Fingers[i].Successor = successor.BasicNode
+				}
+
+				//if successor.Id != joinedNode.Id {
+				//	self.Fingers[i].Successor = successor.BasicNode
+				//} else if self.Fingers[i].Id != self.Id {
+				//	self.Fingers[i].Successor = self.BasicNode
+			}
 		}
 	}
 }
@@ -362,8 +400,6 @@ func (self *DHTnode) updateOthers() {
 //Useless reply parameter, rpc doesn't work without
 func (self *DHTnode) UpdateFingerTable(arg *ArgUpdateFingerTable, reply *Node) error {
 
-	fmt.Printf("\nUpdate finger %d (key : %s )  avec %s", arg.I+1, self.Fingers[arg.I].key, arg.Node.Id)
-	fmt.Printf("\nfinger pointe sur %s", self.Fingers[arg.I].Id)
 	argIdByte, err := hex.DecodeString(arg.Node.Id)
 	if err != nil {
 		log.Fatal("err DecodeString in UpdateFingerTable :", err)
@@ -371,7 +407,6 @@ func (self *DHTnode) UpdateFingerTable(arg *ArgUpdateFingerTable, reply *Node) e
 	//Update finger with arg.Node  only if finger key is between self and arg.Node
 	if between(self.IdByte, argIdByte, self.Fingers[arg.I].keyByte) {
 		if between(self.IdByte, self.Fingers[arg.I].IdByte, arg.Node.IdByte) {
-			fmt.Println("\nDO IT !")
 			self.Fingers[arg.I].Node = arg.Node
 
 			//get first node preceding n

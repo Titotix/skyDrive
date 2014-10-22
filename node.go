@@ -262,7 +262,6 @@ func (self *DHTnode) join(joinedNode BasicNode) {
 	if isAlive(joinedNode) {
 		self.initFingerTable(joinedNode)
 		self.updateOthers()
-		self.printFingers()
 	} else {
 		//First node on the ring
 		for i := 0; i < m; i++ {

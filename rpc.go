@@ -67,9 +67,10 @@ func (nodeTarget *BasicNode) updateFingerTable(s Node, i int) {
 	arg.I = i
 	if nodeTarget.Id == thisNode.Id {
 		// execute in local
-		fmt.Println("exec in local")
-		reply := new(Node)
-		_ = thisNode.UpdateFingerTable(arg, reply)
+		//fmt.Println("exec in local")
+		//reply := new(Node)
+		//_ = thisNode.UpdateFingerTable(arg, reply)
+		log.Fatal("updateFingerTable himself")
 	} else {
 		clientSocket := connect(nodeTarget.Ip, nodeTarget.Port)
 		callUpdateFingerTable(clientSocket, arg)

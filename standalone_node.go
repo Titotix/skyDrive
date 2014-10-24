@@ -74,6 +74,8 @@ func main() {
 	//sendMessage(msg, remoteNodePort)
 
 	//Wait in put for printFingers
+
+	httpServer()
 	for {
 		for scanner.Scan() {
 			{

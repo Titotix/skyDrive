@@ -3,13 +3,14 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"net"
 	"os"
+	"time"
 )
 
 //GLobal variable
 var thisNode *DHTnode
 var m int
+var defaultPort string
 
 /*
 / When finished this file should be able to replace ring.go
@@ -21,17 +22,12 @@ var m int
 
 func main() {
 
-	addrs, _ := net.InterfaceAddrs()
-	for _, addr := range addrs {
-		fmt.Println("addr: " + addr.String())
-
-	}
-
 	//fmt.Println("addr : " + net.InterfaceAddrs[0].String())
 	//fmt.Println("addr : " + net.InterfaceAddrs.String())
 	//fmt.Println("addr : " + net.InterfaceAddrs[1].String())
 	thisNode = new(DHTnode)
 	m = 160
+	defaultPort = "9999"
 	fmt.Printf("\nNew node is starting...\n")
 
 	fmt.Printf("Port for this node: ")
@@ -43,52 +39,68 @@ func main() {
 	}
 	nodePort := scanner.Text()
 
-	thisNode = createNode(nodePort)
-	//	thisNode.updateAllFingerTables()
+	firstNode := createFirstNode("localhost", "5555")
+	*thisNode = createNode(nodePort)
 
-	//Enable listening for rpc
-	thisNode.listenHTTP(nodePort)
-	fmt.Printf("listenHTTP done !")
-	thisNode.printRing()
+	//thisNode.updateAllFingerTables()
 
 	//thisNode.startNodeListener()
 
-	fmt.Printf("\nSearch for key: ")
-	for scanner.Scan() {
-		{
-			break
-		}
-	}
-	testKey := scanner.Text()
-	//testHash := sha1hash(testKey)
+	//thisNode.printRing()
+	thisNode.join(firstNode)
+	//Enable listening for rpc
+	thisNode.listenHTTP(nodePort)
 
-	//var err error
-	fmt.Printf("\nOn port node : ")
-	for scanner.Scan() {
-		{
-			break
-		}
-	}
-	//port := scanner.Text()
-
-	// Care ! lookup have to be used with nodeTarget not whith thisNode (current node)
-	// But as far as successor are not set, can't test for the moment with successor (by examples)
-	reply := thisNode.lookup(testKey)
-	fmt.Printf("\nlookup result: %s\n", reply.Id)
-
-	//fmt.Printf("\nListening on port %s\n", thisNode.NodePort)
-	//fmt.Printf("\nConnect to remote node on port: ")
-	//scanner = bufio.NewScanner(os.Stdin)
+	//thisNode.printFingers()
+	//printRing(*thisNode)
+	fmt.Printf("\nThis node:\n")
+	thisNode.print()
+	//for {
+	//fmt.Println("\nSearch for key: ")
 	//for scanner.Scan() {
 	//	{
 	//		break
 	//	}
 	//}
-	//remoteNodePort := scanner.Text()
+	//testKey := scanner.Text()
+	////var responsibleNode DHTnode
+	////_ = thisNode.FingerLookup(&ArgLookup{*thisNode, testKey}, &responsibleNode)
+	//reply := thisNode.findSuccessor(testKey)
+	//fmt.Printf("\nlookup result: %s\n", reply.Id)
+	//}
+	//testHash := sha1hash(testKey)
 
 	//msg := createMessage(thisNodePort, thisNodePort, remoteNodePort, "a", "b")
 	//sendMessage(msg, remoteNodePort)
 
+	//Wait in put for printFingers
+	for {
+		for scanner.Scan() {
+			{
+				break
+			}
+		}
+		input := scanner.Text()
+		if input == "y" {
+			thisNode.printFingers()
+			fmt.Println("** MOI :")
+			thisNode.print()
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
 	fmt.Printf("\n\n")
 
+}
+
+func (joinedNode *Node) setJoinedNode(ip string, port string) {
+
+	//	fmt.Printf("IP of first node to join : (let empty for default) ")
+	//	scanner := bufio.NewScanner(os.Stdin)
+	//	for scanner.Scan() {
+	//		{
+	//			break
+	//		}
+	//	}
+	joinedNode.Port = port
+	joinedNode.Ip = ip
 }

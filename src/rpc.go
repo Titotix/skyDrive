@@ -195,3 +195,28 @@ func (nodeTarget *DHTnode) closestPrecedingFinger(key string) Node {
 		return *reply
 	}
 }
+
+func callNodeStatus(clientSocket *rpc.Client, arg *ArgStatus) *Node {
+	var reply bool
+	err := clientSocket.Call("DHTnode.NodeStatus", arg, &reply)
+	if err != nil {
+		log.Fatal("remote NodeStatus error:", err)
+	}
+	return &reply
+}
+
+func (nodeTarget *Node) nodeStatus() bool {
+
+	arg := new(ArgStatus)
+	if nodeTarget.Id == thisNode.Id {
+		// execute in local
+		reply := new(bool)
+		_ = nodeTarget.NodeStatus(arg, reply)
+		return *reply
+	} else {
+		clientSocket := connect(nodeTarget.Ip, nodeTarget.Port)
+		reply := callNodeStatus(clientSocket, arg)
+		clientSocket.Close()
+		return *reply
+	}
+}

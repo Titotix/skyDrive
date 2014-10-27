@@ -51,7 +51,7 @@ func main() {
 	//Enable listening for rpc
 	thisNode.listenHTTP(nodePort)
 
-	//thisNode.printFingers()
+	thisNode.printFingers()
 	//printRing(*thisNode)
 	fmt.Printf("\nThis node:\n")
 	thisNode.print()

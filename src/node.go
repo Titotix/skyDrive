@@ -516,6 +516,21 @@ func (self *DHTnode) isMyFinger(node Finger) bool {
 	return false
 }
 
+/**
+* Use this function when a node has been notice as dead
+* deadNode has to be the successor of self
+*
+**/
+func (self *DHTnode) reconnectRing(deadNode DHTnode) {
+	self.Successor = self.Fingers[0].Successor
+	/*
+		deadNode is supposed to be the successor of self
+		self.successor = finger[0].successor
+		then update finger table...
+	*/
+
+}
+
 //func (self *DHTnode) getPredecessor() BasicNode {
 //	for i:= m-1; i > -1; i-- {
 //		if self.Fingers[i].Id != self.Id {

@@ -32,24 +32,24 @@ func checkStatus(n *Node, interval time.Duration) {
 		} else {
 			fmt.Printf("not ok\n")
 
-			if n.nodeId = node.predecessor {	// predecessor unavailble
+			//if n.nodeId = node.predecessor {	// predecessor unavailble
 				//blockRemoteAccess("pred", "node")
 				//reconnectRing(n.predecessor.predecessor)
 				
-				moveData() // stores data from previous predecessor
-				replicateData("node", n.predecessor, "succ")  // replicates data to new predecessor
+				//moveData() // stores data from previous predecessor
+				//replicateData("node", n.predecessor, "succ")  // replicates data to new predecessor
 				
 				//allowRemoteAccess("pred", "node")
 			
-			} else {		 		// successor unavailble
-				//blockRemoteAccess("node", "succ")
-				//reconnectRing(n.successor.successor)
+		//	} else {		 		// successor unavailble
+				blockRemoteAccess("node", "succ")
+				reconnectRing(n.successor.successor)
 				
 				replicateData("succ", n.succesor, "node")  // restores lost data to new sucessor
 				replicateData("node", n.successor, "pred") // replicates own data to new succ
 				
-				//allowRemoteAccess("node", "succ")
-			}
+				allowRemoteAccess("node", "succ")
+		//	}
 			
 		}
 		time.Sleep(interval * time.Millisecond)

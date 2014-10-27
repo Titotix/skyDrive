@@ -10,6 +10,19 @@ import (
 	"strings"
 )
 
+type ArgDeletion struct {
+	storagesSpace string
+	key string
+}
+
+
+type ArgStorage struct {
+	key string
+	data string
+	StorageSpace string
+}
+
+
 // inits a folder and files for storing keys-data pair if they dont exist
 func storageInit() {
 

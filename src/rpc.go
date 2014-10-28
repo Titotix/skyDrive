@@ -25,6 +25,8 @@ type ArgFirstUpdate struct {
 	secondNode Node
 }
 
+type ArgStatus struct{}
+
 /*
 Abstract RPC for Lookup method
 @arg : ArgLookup{nodeTarget.Successor, keyTarget}
@@ -196,7 +198,7 @@ func (nodeTarget *DHTnode) closestPrecedingFinger(key string) Node {
 	}
 }
 
-func callNodeStatus(clientSocket *rpc.Client, arg *ArgStatus) *Node {
+func callNodeStatus(clientSocket *rpc.Client, arg *ArgStatus) *bool {
 	var reply bool
 	err := clientSocket.Call("DHTnode.NodeStatus", arg, &reply)
 	if err != nil {

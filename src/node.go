@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"encoding/hex"
 	"fmt"
 	"log"
@@ -318,21 +317,20 @@ func (self *DHTnode) initFingerTable(joinedNode BasicNode) {
 //TODO
 func (self *DHTnode) initFingerSuccessor(joinedNode BasicNode) {
 	for i := 0; i < m; i++ {
-		//If finger I point to self node, assign self succcessor to finger successor
+		//If finger i point to self node, assign self succcessor to finger successor
 		if self.Fingers[i].Id == self.Id {
 			self.Fingers[i].Successor = self.Successor
 		} else {
 			next, _ := add(self.Fingers[i].Id, 1)
 			successor := joinedNode.findSuccessor(next)
 
-			fmt.Println("successor : ")
-			//TODO BUG successor est tjrs joinedNOde lorsque finger i id est joinedNode
+			fmt.Printf("\n ***initFingerSuccessor : successor of next (finger %d): \n", i+1)
 			successor.print()
 			// if finger i key is after joinedNode or equal
 			if between(joinedNode.IdByte, self.IdByte, self.Fingers[i].keyByte) {
 
 				//If findSuccessor answer node after self, assign self as self.Fingers i+1 successor
-				if between(self.IdByte, joinedNode.IdByte, successor.IdByte) {
+				if between(self.IdByte, joinedNode.IdByte, successor.IdByte) || successor.Id == joinedNode.Id {
 					self.Fingers[i].Successor = self.BasicNode
 				} else {
 					self.Fingers[i].Successor = successor.BasicNode
@@ -342,18 +340,14 @@ func (self *DHTnode) initFingerSuccessor(joinedNode BasicNode) {
 				//if finger i point to joinedNode
 				if self.Fingers[i].Id == joinedNode.Id {
 					// And findSucc is after self
-					if bytes.Compare(successor.IdByte, self.IdByte) == +1 {
+					if between(self.IdByte, joinedNode.IdByte, successor.IdByte) || successor.Id == joinedNode.Id {
 						//Take self as finger i successor
 						self.Fingers[i].Successor = self.BasicNode
 					} else {
-						//Handle case of second node join
-						if successor.Id != joinedNode.Id {
 
-							self.Fingers[i].Successor = successor.BasicNode
-						} else {
-							self.Fingers[i].Successor = self.BasicNode
-						}
+						self.Fingers[i].Successor = successor.BasicNode
 					}
+
 				} else {
 					self.Fingers[i].Successor = successor.BasicNode
 				}

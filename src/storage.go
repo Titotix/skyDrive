@@ -38,7 +38,7 @@ func storageInit() {
 
 // deletes key-data pair, can be called from another node
 // arg[0] is for node/succ/pred, arg[1] is for key 
-func (n *Node() DeleteData (arg *ArgDeletion, dataDeleted *bool) error {
+func (n *Node) DeleteData (arg *ArgDeletion, dataDeleted *bool) error {
 
 	storageSpace := ArgDeletion[0] 
 	key := ArgDeletion[1]
@@ -47,7 +47,7 @@ func (n *Node() DeleteData (arg *ArgDeletion, dataDeleted *bool) error {
 	if storageSpace == "node" {
 		currentFilename = "nodeData.txt"
 		oldFileName = "oldNodeData.txt"
-	} else if storageSpace == "succ"
+	} else if storageSpace == "succ" {
 		currentFilename = "succData.txt"
 		oldFileName = "oldSuccData.txt"
 	} else {
@@ -131,7 +131,7 @@ func appendDataToStorage(key string, data string, storageSpace string) {
 	filename := ""
 	if storageSpace == "node" {
 		filename = "nodeData.txt"
-	} else if storageSpace == "succ"
+	} else if storageSpace == "succ" {
 		filename = "succData.txt"
 	} else {
 		filename = "predData.txt"
@@ -179,7 +179,7 @@ func listStoredData(storageSpace string) {
 	filename := ""
 	if storageSpace == "node" {
 		filename = "nodeData.txt"
-	} else if storageSpace == "succ"
+	} else if storageSpace == "succ" {
 		filename = "succData.txt"
 	} else {
 		filename = "predData.txt"

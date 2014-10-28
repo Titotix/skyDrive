@@ -5,10 +5,6 @@ import (
 	"time"
 )
 
-type Node struct {
-	name string
-}
-
 type ArgStatus struct {}
 
 
@@ -62,7 +58,7 @@ func replicateData(oldStorageSpace string, newNode *Node, newStorageSpace string
 
 	if oldStorageSpace == "node" {
 		filename = "nodeData.txt"
-	} else if oldStorageSpace == "pred"
+	} else if oldStorageSpace == "pred" {
 		filename = "predData.txt"
 	} else {
 		filename = "succData.txt"

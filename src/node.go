@@ -5,7 +5,12 @@ import (
 	"encoding/hex"
 	"fmt"
 	"log"
+	"os"
+	"io"
+	"bufio"
+	"strings"
 )
+
 
 type ComparableNode struct {
 	Id   string
@@ -116,7 +121,8 @@ func makeDHTNode(NodeIp string, NodePort string, joinViaIp string, joinViaPort s
 	basicNode := BasicNode{ComparableNode{IdStr, NodeIp, NodePort}, IdByte}
 	simpleNode := Node{basicNode, *new(BasicNode), *new(BasicNode)}
 	node := DHTnode{simpleNode, "", "", nil, joinViaIp, joinViaPort}
-
+    
+    m := 160
 	for i := 0; i < m; i++ {
 		fingerNumber := i + 1
 		newFingerKey, newFingerKeyByte := calcFinger(node.IdByte, fingerNumber, 160)
@@ -266,6 +272,7 @@ func (self *DHTnode) join(joinedNode BasicNode) {
 		self.updateOthers()
 	} else {
 		//First node on the ring
+		m := 160
 		for i := 0; i < m; i++ {
 			self.Fingers[i].Node = self.Node
 			self.Fingers[i].Predecessor = self.BasicNode
@@ -294,7 +301,7 @@ func (self *DHTnode) initFingerTable(joinedNode BasicNode) {
 	fmt.Println("successor.Pred :" + successor.Predecessor.Id)
 	self.Predecessor = successor.Predecessor
 	self.Fingers[0].Predecessor = self.BasicNode
-
+	m := 160
 	for i := 0; i < m-1; i++ {
 
 		//If finger i+1 key is between self and node pointed by fingers i
@@ -317,6 +324,7 @@ func (self *DHTnode) initFingerTable(joinedNode BasicNode) {
 
 //TODO
 func (self *DHTnode) initFingerSuccessor(joinedNode BasicNode) {
+	m := 160
 	for i := 0; i < m; i++ {
 		//If finger I point to self node, assign self succcessor to finger successor
 		if self.Fingers[i].Id == self.Id {
@@ -384,6 +392,8 @@ func (self *DHTnode) basicInit(joinedNode BasicNode) {
 
 func (self *DHTnode) updateOthers() {
 	var i int
+
+	m := 160
 	for i = 0; i < m; i++ {
 		//find last node p whose i finger might be self
 		lastFinger, _ := calcLastFinger(self.IdByte, i+1)
@@ -474,6 +484,7 @@ func (self *DHTnode) ClosestPrecedingFinger(arg *ArgLookup, reply *Node) error {
 	idByte := arg.KeyByte
 	//fmt.Println("arg.Key :" + arg.Key)
 	printIdByte(arg.KeyByte)
+	m := 160
 	for i := m - 1; i > -1; i-- {
 		if inside(self.IdByte, idByte, self.Fingers[i].IdByte) {
 			*reply = self.Fingers[i].Node
@@ -508,6 +519,7 @@ func (self *DHTnode) FindSuccessor(arg *ArgLookup, reply *Node) error {
 }
 
 func (self *DHTnode) isMyFinger(node Finger) bool {
+	m := 160
 	for i := 0; i < m; i++ {
 		if self.Fingers[i].ComparableNode == node.ComparableNode {
 			return true
@@ -521,3 +533,146 @@ func (self *DHTnode) isMyFinger(node Finger) bool {
 //		if self.Fingers[i].Id != self.Id {
 //			if self.Fingers[i].Node.findSuccessor(self.Fingers[i].Id)
 //
+
+
+
+type ArgDeletion struct {
+	StorageSpace string
+	Key string
+}
+
+type ArgStorage struct {
+	Key string
+	Data string
+	StorageSpace string
+}
+
+
+// stores data at current node, can be called from another node
+func (n *BasicNode) StoreData(arg *ArgStorage, dataStored *bool) error {
+
+	key := arg.Key
+	data := arg.Data
+	storageSpace := arg.StorageSpace
+	appendDataToStorage(key, data, storageSpace)
+	*dataStored = true
+	return nil
+}
+
+
+// used by StoreData()
+func appendDataToStorage(key string, data string, storageSpace string) {
+
+	filename := ""
+	if storageSpace == "node" {
+		filename = "nodeData.txt"
+	} else if storageSpace == "succ" {
+		filename = "succData.txt"
+	} else {
+		filename = "predData.txt"
+	}
+
+	storageFile, err := os.OpenFile(filename, os.O_APPEND, 0666) 
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer storageFile.Close()
+
+	storageFileInfo, _ := storageFile.Stat()
+	lastchar := storageFileInfo.Size()
+
+	line := key + "," + data + "\r\n"
+	numbytes, _ := storageFile.WriteAt([]byte(line), int64(lastchar))
+	storageFile.Close()
+	fmt.Printf("%d bytes written to contents file\n", numbytes)	
+}
+
+
+
+// deletes key-data pair, can be called from another node
+func (n *DHTnode) DeleteData (arg *ArgDeletion, dataDeleted *bool) error {
+
+	storageSpace := arg.StorageSpace
+	key := arg.Key
+
+	currentFileName := ""
+	oldFileName := ""
+	if storageSpace == "node" {
+		currentFileName = "nodeData.txt"
+		oldFileName = "oldNodeData.txt"
+	} else if storageSpace == "succ" {
+		currentFileName = "succData.txt"
+		oldFileName = "oldSuccData.txt"
+	} else {
+		currentFileName = "predData.txt"
+		oldFileName = "oldPredData.txt"
+	}
+
+	err := os.Rename(currentFileName,oldFileName)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+
+	oldStorageFile, err := os.Open(oldFileName)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer oldStorageFile.Close()
+	reader := bufio.NewReader(oldStorageFile)
+
+	newStorageFile, err := os.Create(currentFileName)
+	if err != nil {
+		log.Fatal(err)
+	}
+ 	defer newStorageFile.Close()
+
+
+ 	oldStorageEOF := false
+ 	for !oldStorageEOF {
+		line, err := reader.ReadBytes('\n')
+		if err != nil {
+ 			if err == io.EOF {
+ 				oldStorageEOF = true
+ 			} else {
+				log.Fatal(err)
+			}
+		}
+
+		stringLine := string(line[:])
+
+		if !strings.Contains(stringLine, key) {
+			newStorageFileInfo, err := newStorageFile.Stat()
+ 			if err != nil {
+				log.Fatal(err)
+			}
+	 		newStorageFileSize := newStorageFileInfo.Size()
+			numbytes, err := newStorageFile.WriteAt([]byte(line), int64(newStorageFileSize))
+			if err != nil {
+				log.Fatal(err)
+			}
+			fmt.Printf("%d bytes written\n", numbytes)
+		}
+	}
+	oldStorageFile.Close()
+	newStorageFile.Close()
+
+	err = os.Remove(oldFileName)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	*dataDeleted = true
+	return nil
+}
+
+
+type ArgStatus struct {}
+
+// responds to status checks
+func (n *DHTnode) NodeStatus(arg *ArgStatus, statusReply *bool) error {
+    
+    *statusReply = true
+
+    return nil
+}

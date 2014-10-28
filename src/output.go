@@ -82,6 +82,7 @@ func (self *ComparableNode) print() {
 }
 
 func (self *DHTnode) printFingers() {
+	m := 160
 	for i := 0; i < m; i++ {
 		fmt.Println("\nFinger " + strconv.Itoa(i+1))
 		fmt.Printf("key :" + self.Fingers[i].key + "\n")

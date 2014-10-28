@@ -140,6 +140,7 @@ func calcFinger(n []byte, k int, m int) (string, []byte) {
 }
 
 func calcFingerSha(n []byte, k int) (string, []byte) {
+	m := 160
 	return calcFinger(n, k, m)
 }
 
@@ -181,6 +182,7 @@ func calcLastFinger(n []byte, k int) (string, []byte) {
 	neg.Add(&addend, &nBigInt)
 
 	// calculate 2^m
+	m := 160
 	ceil := big.Int{}
 	ceil.Exp(two, big.NewInt(int64(m)), nil)
 

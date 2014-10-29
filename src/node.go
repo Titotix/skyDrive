@@ -564,6 +564,7 @@ func (n *BasicNode) StoreData(arg *ArgStorage, dataStored *bool) error {
 func appendDataToStorage(key string, data string, storageSpace string) {
 
 	_ = os.Chdir("..")
+	_ = os.Chdir("..")
 	_ = os.Chdir("storage")
 
 	filename := ""
@@ -588,6 +589,10 @@ func appendDataToStorage(key string, data string, storageSpace string) {
 	numbytes, _ := storageFile.WriteAt([]byte(line), int64(lastchar))
 	storageFile.Close()
 	fmt.Printf("%d bytes written to contents file\n", numbytes)	
+
+	_ = os.Chdir("..")
+	_ = os.Chdir("new_git")	
+	_ = os.Chdir("src")	
 }
 
 
@@ -595,6 +600,7 @@ func appendDataToStorage(key string, data string, storageSpace string) {
 // deletes key-data pair, can be called from another node
 func (n *DHTnode) DeleteData (arg *ArgDeletion, dataDeleted *bool) error {
 
+	_ = os.Chdir("..")
 	_ = os.Chdir("..")
 	_ = os.Chdir("storage")
 
@@ -668,8 +674,14 @@ func (n *DHTnode) DeleteData (arg *ArgDeletion, dataDeleted *bool) error {
 		log.Fatal(err)
 	}
 
+	_ = os.Chdir("..")
+	_ = os.Chdir("new_git")	
+	_ = os.Chdir("src")	
+
 	*dataDeleted = true
 	return nil
+
+
 }
 
 
@@ -688,7 +700,10 @@ func (n *DHTnode) NodeStatus(arg *ArgStatus, statusReply *bool) error {
 func (n *DHTnode) ListStoredData(storageSpace string) {
 
 	_ = os.Chdir("..")
+	_ = os.Chdir("..")
 	_ = os.Chdir("storage")
+
+	fmt.Printf("about to open nodeData.txt")
 
 	filename := ""
 	if storageSpace == "node" {
@@ -701,6 +716,7 @@ func (n *DHTnode) ListStoredData(storageSpace string) {
 
 	storageFile, err := os.Open(filename)
 	if err != nil {
+		fmt.Printf("failed to open nodeData.txt")
 		log.Fatal(err)
 	}
 	defer storageFile.Close()
@@ -730,11 +746,16 @@ func (n *DHTnode) ListStoredData(storageSpace string) {
 		}
 	}
 	storageFile.Close()
+
+	_ = os.Chdir("..")
+	_ = os.Chdir("new_git")	
+	_ = os.Chdir("src")	
 }
 
 // inits a folder (ip for unique name when on same computer) and files for storing keys-data pair if they dont exist
 func (n *DHTnode) StorageInit() {
 
+	_ = os.Chdir("..")
 	_ = os.Chdir("..")
 	
 	folderName := "storage" + n.Ip
@@ -745,5 +766,7 @@ func (n *DHTnode) StorageInit() {
 	CreateFile("nodeData.txt")
 	CreateFile("predData.txt")
 
-	_ = os.Chdir("..")	
+	_ = os.Chdir("..")
+	_ = os.Chdir("new_git")	
+	_ = os.Chdir("src")	
 }

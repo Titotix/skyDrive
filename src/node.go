@@ -676,3 +676,63 @@ func (n *DHTnode) NodeStatus(arg *ArgStatus, statusReply *bool) error {
 
     return nil
 }
+
+
+// prints all key/data-pairs in one of the storage spaces of the node
+func (n *DHTnode) ListStoredData(storageSpace string) {
+
+	filename := ""
+	if storageSpace == "node" {
+		filename = "nodeData.txt"
+	} else if storageSpace == "succ" {
+		filename = "succData.txt"
+	} else {
+		filename = "predData.txt"
+	}
+
+	storageFile, err := os.Open(filename)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer storageFile.Close()
+
+	reader := bufio.NewReader(storageFile)
+	storageEOF := false
+	fmt.Printf("\n\nFiles stored in %s space:\n", storageSpace)
+	for (!storageEOF) {
+		key_delim, err := reader.ReadBytes(',')
+		if err != nil {
+			if err != io.EOF {
+				log.Fatal(err)
+			}
+		}
+		key := bytes.TrimSuffix(key_delim, []byte(","))
+		data, err := reader.ReadBytes('\n')
+		if err != nil {
+			if err != io.EOF {
+				log.Fatal(err)
+			}
+		}
+		if (len(data)) == 0 {
+			storageEOF = true
+		} else {
+			fmt.Printf("key:%s\n", key)
+			fmt.Printf("data:%s\n", data)
+		}
+	}
+	storageFile.Close()
+}
+
+// inits a folder (ip for unique name when on same computer) and files for storing keys-data pair if they dont exist
+func (n *DHTnode) StorageInit() {
+
+	folderName: "storage" + n.Ip
+	CreateDir(folderName)
+	_ = os.Chdir(folderName)
+
+	CreateFile("succData.txt")
+	CreateFile("nodeData.txt")
+	CreateFile("predData.txt")
+
+	_ = os.Chdir("..")	
+}

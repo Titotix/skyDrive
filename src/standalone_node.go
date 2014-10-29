@@ -26,6 +26,8 @@ func main() {
 	//fmt.Println("addr : " + net.InterfaceAddrs.String())
 	//fmt.Println("addr : " + net.InterfaceAddrs[1].String())
 	thisNode = new(DHTnode)
+	thisNode.StorageInit()
+	thisNode.ListStoredData("node")
 	m = 160
 	defaultPort = "9999"
 	fmt.Printf("\nNew node is starting...\n")

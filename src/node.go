@@ -563,6 +563,9 @@ func (n *BasicNode) StoreData(arg *ArgStorage, dataStored *bool) error {
 // used by StoreData()
 func appendDataToStorage(key string, data string, storageSpace string) {
 
+	_ = os.Chdir("..")
+	_ = os.Chdir("storage")
+
 	filename := ""
 	if storageSpace == "node" {
 		filename = "nodeData.txt"
@@ -591,6 +594,9 @@ func appendDataToStorage(key string, data string, storageSpace string) {
 
 // deletes key-data pair, can be called from another node
 func (n *DHTnode) DeleteData (arg *ArgDeletion, dataDeleted *bool) error {
+
+	_ = os.Chdir("..")
+	_ = os.Chdir("storage")
 
 	storageSpace := arg.StorageSpace
 	key := arg.Key
@@ -681,6 +687,9 @@ func (n *DHTnode) NodeStatus(arg *ArgStatus, statusReply *bool) error {
 // prints all key/data-pairs in one of the storage spaces of the node
 func (n *DHTnode) ListStoredData(storageSpace string) {
 
+	_ = os.Chdir("..")
+	_ = os.Chdir("storage")
+
 	filename := ""
 	if storageSpace == "node" {
 		filename = "nodeData.txt"
@@ -726,7 +735,9 @@ func (n *DHTnode) ListStoredData(storageSpace string) {
 // inits a folder (ip for unique name when on same computer) and files for storing keys-data pair if they dont exist
 func (n *DHTnode) StorageInit() {
 
-	folderName: "storage" + n.Ip
+	_ = os.Chdir("..")
+	
+	folderName := "storage" + n.Ip
 	CreateDir(folderName)
 	_ = os.Chdir(folderName)
 

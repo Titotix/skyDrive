@@ -535,6 +535,25 @@ func (self *DHTnode) isMyFinger(node Finger) bool {
 //
 
 
+func (thisNode *Node) removeData (storageSpace string, unhashedKey ) {
+
+	hashedKey := sha1hash(unhashedKey)
+	arg := &ArgLookup{hashedKey}
+	reply := nil
+	err := thisNode.findSuccessor(arg, &reply)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	nodeToRemoveAt := reply.BasicNode
+
+	err := nodeToRemoveAt.deleteDataRemote(storageSpace, hashedKey)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+
+}
 
 func (thisNode *Node) uploadData (unhashedKey string, data string) {
 
@@ -548,15 +567,7 @@ func (thisNode *Node) uploadData (unhashedKey string, data string) {
 
 	nodeToStoreAt := reply.BasicNode
 
-	// setting up network connection to other node
-	client := connectToNode(nodeToStoreAt)
-
-
-	client.storeRemote
-		
-	arg := &ArgStorage{hashedKey, data, "node"}
-	dataStored := false
-	err := nodeToStoreAt.StoreData(arg, &dataStored)
+	err := nodeToStoreAt.storeDataRemote(hashedKey, data, "node")
 	if err != nil {
 		log.Fatal(err)
 	}

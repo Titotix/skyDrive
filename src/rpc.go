@@ -37,8 +37,8 @@ type ArgDeleteData struct {
 } 
 
 /*
-Abstract RPC for StoreData method
-@arg : ArgLookup{ key, data, storageSpace}
+Abstract RPC for DeleteData method
+@arg : ArgDeleteData{ storageSpace, key}
 */
 func (self *DHTnode) callDeleteData(clientSocket *rpc.Client, arg *ArgDeleteData) *DHTnode {
 	var reply bool
@@ -49,7 +49,7 @@ func (self *DHTnode) callDeleteData(clientSocket *rpc.Client, arg *ArgDeleteData
 	return &reply
 }
 
-//Abstract callStoreData method
+//Abstract callDeleteData method
 // nodeTarget is the node where rpc is computed
 func (nodeTarget *DHTnode) deleteDataRemote(storageSpace string, key string) *DHTnode {
 
@@ -64,7 +64,7 @@ func (nodeTarget *DHTnode) deleteDataRemote(storageSpace string, key string) *DH
 
 /*
 Abstract RPC for StoreData method
-@arg : ArgLookup{ key, data, storageSpace}
+@arg : ArgStoreData{ key, data, storageSpace}
 */
 func (self *DHTnode) callStoreData(clientSocket *rpc.Client, arg *ArgStoreData) *DHTnode {
 	var reply bool
@@ -85,20 +85,6 @@ func (nodeTarget *DHTnode) storeDataRemote(key string, data string, storageSpace
 	clientSocket.Close()
 	return reply
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

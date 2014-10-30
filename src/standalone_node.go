@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"os"
 	"time"
+	//"log"
 )
 
 //GLobal variable
 var thisNode *DHTnode
-var m int
+var m int = 160
 var defaultPort string
 
 /*
@@ -26,7 +27,25 @@ func main() {
 	//fmt.Println("addr : " + net.InterfaceAddrs.String())
 	//fmt.Println("addr : " + net.InterfaceAddrs[1].String())
 	thisNode = new(DHTnode)
-	m = 160
+	thisNode.StorageInit()
+
+	// Testing to store data
+	thisNode.uploadData("testkey", "testdata")
+
+	/*
+		//dataStored := false;
+		//argStore := &ArgStorage{sha1hash("testkey"), "testdata", "node"}
+		//err := thisNode.StoreData(argStore, &dataStored)
+
+		// Testing to list data stored on local node
+		dataListed := false;
+		argList := &ArgListing{"node"}
+		err = thisNode.ListStoredData(argList, &dataListed)
+		if err != nil {
+			log.Fatal(err)
+		}
+	*/
+
 	defaultPort = "9999"
 	fmt.Printf("\nNew node is starting...\n")
 

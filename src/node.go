@@ -4,7 +4,12 @@ import (
 	"encoding/hex"
 	"fmt"
 	"log"
+	"os"
+	"io"
+	"bufio"
+	"strings"
 )
+
 
 type ComparableNode struct {
 	Id   string
@@ -115,7 +120,8 @@ func makeDHTNode(NodeIp string, NodePort string, joinViaIp string, joinViaPort s
 	basicNode := BasicNode{ComparableNode{IdStr, NodeIp, NodePort}, IdByte}
 	simpleNode := Node{basicNode, *new(BasicNode), *new(BasicNode)}
 	node := DHTnode{simpleNode, "", "", nil, joinViaIp, joinViaPort}
-
+    
+    m := 160
 	for i := 0; i < m; i++ {
 		fingerNumber := i + 1
 		newFingerKey, newFingerKeyByte := calcFinger(node.IdByte, fingerNumber, 160)
@@ -264,6 +270,7 @@ func (self *DHTnode) join(joinedNode BasicNode) {
 		self.updateOthers()
 	} else {
 		//First node on the ring
+		m := 160
 		for i := 0; i < m; i++ {
 			self.Fingers[i].Node = self.Node
 			self.Fingers[i].Predecessor = self.BasicNode
@@ -291,7 +298,7 @@ func (self *DHTnode) initFingerTable(joinedNode BasicNode) {
 	//findSuccessor give back Predecessor ?
 	self.Predecessor = successor.Predecessor
 	self.Fingers[0].Predecessor = self.BasicNode
-
+	m := 160
 	for i := 0; i < m-1; i++ {
 
 		//If finger i+1 key is between self and node pointed by fingers i
@@ -314,6 +321,7 @@ func (self *DHTnode) initFingerTable(joinedNode BasicNode) {
 
 //TODO
 func (self *DHTnode) initFingerSuccessor(joinedNode BasicNode) {
+	m := 160
 	for i := 0; i < m; i++ {
 		//If finger i point to self node, assign self succcessor to finger successor
 		if self.Fingers[i].Id == self.Id {
@@ -374,6 +382,8 @@ func (self *DHTnode) basicInit(joinedNode BasicNode) {
 
 func (self *DHTnode) updateOthers() {
 	var i int
+
+	m := 160
 	for i = 0; i < m; i++ {
 		//find last node p whose i finger might be self
 		lastFinger, _ := calcLastFinger(self.IdByte, i+1)
@@ -495,6 +505,7 @@ func (self *DHTnode) FindPredecessor(arg *ArgLookup, reply *Node) error {
 func (self *DHTnode) ClosestPrecedingFinger(arg *ArgLookup, reply *Node) error {
 	idByte := arg.KeyByte
 	//fmt.Println("arg.Key :" + arg.Key)
+	printIdByte(arg.KeyByte)
 	for i := m - 1; i > -1; i-- {
 		if inside(self.IdByte, idByte, self.Fingers[i].IdByte) {
 			*reply = self.Fingers[i].Node
@@ -522,6 +533,7 @@ func (self *DHTnode) FindSuccessor(arg *ArgLookup, reply *Node) error {
 }
 
 func (self *DHTnode) isMyFinger(node Finger) bool {
+	m := 160
 	for i := 0; i < m; i++ {
 		if self.Fingers[i].ComparableNode == node.ComparableNode {
 			return true
@@ -538,4 +550,266 @@ func (self *DHTnode) isMyFinger(node Finger) bool {
 func (self *DHTnode) reconnectRing(deadNode DHTnode) {
 	self.Successor = self.Fingers[0].Successor
 	self.updateFingerFromDeadOne(deadNode.BasicNode)
+}
+
+func (thisNode *Node) removeData (storageSpace string, unhashedKey ) {
+
+	hashedKey := sha1hash(unhashedKey)
+	arg := &ArgLookup{hashedKey}
+	reply := nil
+	err := thisNode.findSuccessor(arg, &reply)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	nodeToRemoveAt := reply.BasicNode
+
+	err := nodeToRemoveAt.deleteDataRemote(storageSpace, hashedKey)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+
+}
+
+func (thisNode *Node) uploadData (unhashedKey string, data string) {
+
+	hashedKey := sha1hash(unhashedKey)
+	arg := &ArgLookup{hashedKey}
+	reply := nil
+	err := thisNode.findSuccessor(arg, &reply)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	nodeToStoreAt := reply.BasicNode
+
+	err := nodeToStoreAt.storeDataRemote(hashedKey, data, "node")
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+
+
+
+// stores data at current node, can be called from another node
+func (n *BasicNode) StoreData(arg *ArgStorage, dataStored *bool) error {
+
+	key := arg.Key
+	data := arg.Data
+	storageSpace := arg.StorageSpace
+	appendDataToStorage(key, data, storageSpace)
+	if storageSpace == "node" {		
+		replicateData("node", n.predeccessor, "node")
+		replicateData("node", n.successor, "node")
+	}
+
+	*dataStored = true
+	return nil
+}
+
+// used by StoreData()
+func appendDataToStorage(key string, data string, storageSpace string) {
+
+	_ = os.Chdir("..")
+	_ = os.Chdir("..")
+	_ = os.Chdir("storage")
+
+	filename := ""
+	if storageSpace == "node" {
+		filename = "nodeData.txt"
+	} else if storageSpace == "succ" {
+		filename = "succData.txt"
+	} else {
+		filename = "predData.txt"
+	}
+
+	storageFile, err := os.OpenFile(filename, os.O_APPEND, 0666) 
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer storageFile.Close()
+
+	storageFileInfo, _ := storageFile.Stat()
+	lastchar := storageFileInfo.Size()
+
+	line := key + "," + data + "\r\n"
+	numbytes, _ := storageFile.WriteAt([]byte(line), int64(lastchar))
+	storageFile.Close()
+	fmt.Printf("%d bytes written to contents file\n", numbytes)	
+
+	_ = os.Chdir("..")
+	_ = os.Chdir("new_git")	
+	_ = os.Chdir("src")	
+}
+
+
+
+// deletes key-data pair, can be called from another node
+func (n *DHTnode) DeleteData (arg *ArgDeletion, dataDeleted *bool) error {
+
+	_ = os.Chdir("..")
+	_ = os.Chdir("..")
+	_ = os.Chdir("storage")
+
+	storageSpace := arg.StorageSpace
+	key := arg.Key
+
+	currentFileName := ""
+	oldFileName := ""
+	if storageSpace == "node" {
+		currentFileName = "nodeData.txt"
+		oldFileName = "oldNodeData.txt"
+	} else if storageSpace == "succ" {
+		currentFileName = "succData.txt"
+		oldFileName = "oldSuccData.txt"
+	} else {
+		currentFileName = "predData.txt"
+		oldFileName = "oldPredData.txt"
+	}
+
+	err := os.Rename(currentFileName,oldFileName)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+
+	oldStorageFile, err := os.Open(oldFileName)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer oldStorageFile.Close()
+	reader := bufio.NewReader(oldStorageFile)
+
+	newStorageFile, err := os.Create(currentFileName)
+	if err != nil {
+		log.Fatal(err)
+	}
+ 	defer newStorageFile.Close()
+
+
+ 	oldStorageEOF := false
+ 	for !oldStorageEOF {
+		line, err := reader.ReadBytes('\n')
+		if err != nil {
+ 			if err == io.EOF {
+ 				oldStorageEOF = true
+ 			} else {
+				log.Fatal(err)
+			}
+		}
+
+		stringLine := string(line[:])
+
+		if !strings.Contains(stringLine, key) {
+			newStorageFileInfo, err := newStorageFile.Stat()
+ 			if err != nil {
+				log.Fatal(err)
+			}
+	 		newStorageFileSize := newStorageFileInfo.Size()
+			numbytes, err := newStorageFile.WriteAt([]byte(line), int64(newStorageFileSize))
+			if err != nil {
+				log.Fatal(err)
+			}
+			fmt.Printf("%d bytes written\n", numbytes)
+		}
+	}
+	oldStorageFile.Close()
+	newStorageFile.Close()
+
+	err = os.Remove(oldFileName)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	_ = os.Chdir("..")
+	_ = os.Chdir("new_git")	
+	_ = os.Chdir("src")	
+
+	*dataDeleted = true
+	return nil
+}
+
+// responds to status checks
+func (n *DHTnode) NodeStatus(arg *ArgStatus, statusReply *bool) error {
+    *statusReply = true
+    return nil
+}
+
+// prints all key/data-pairs in one of the storage spaces of the node
+func (n *DHTnode) ListStoredData (arg *ArgListing, dataListed *bool) error {
+//func (n *DHTnode) ListStoredData(storageSpace string) {
+
+	_ = os.Chdir("..")
+	_ = os.Chdir("..")
+	_ = os.Chdir("storage")
+
+	filename := ""
+	if arg.storageSpace == "node" {
+		filename = "nodeData.txt"
+	} else if arg.storageSpace == "succ" {
+		filename = "succData.txt"
+	} else {
+		filename = "predData.txt"
+	}
+
+	storageFile, err := os.Open(filename)
+	if err != nil {
+		fmt.Printf("failed to open nodeData.txt")
+		log.Fatal(err)
+	}
+	defer storageFile.Close()
+
+	reader := bufio.NewReader(storageFile)
+	storageEOF := false
+	fmt.Printf("\n\nFiles stored in %s space:\n", arg.storageSpace)
+	for (!storageEOF) {
+		key_delim, err := reader.ReadBytes(',')
+		if err != nil {
+			if err != io.EOF {
+				log.Fatal(err)
+			}
+		}
+		key := bytes.TrimSuffix(key_delim, []byte(","))
+		data, err := reader.ReadBytes('\n')
+		if err != nil {
+			if err != io.EOF {
+				log.Fatal(err)
+			}
+		}
+		if (len(data)) == 0 {
+			storageEOF = true
+		} else {
+			fmt.Printf("key:%s\n", key)
+			fmt.Printf("data:%s\n", data)
+		}
+	}
+	storageFile.Close()
+
+	_ = os.Chdir("..")
+	_ = os.Chdir("new_git")	
+	_ = os.Chdir("src")	
+
+	*dataListed = true;
+	return nil
+}
+
+// inits a folder (ip for unique name when on same computer) and files for storing keys-data pair if they dont exist
+func (n *DHTnode) StorageInit() {
+
+	_ = os.Chdir("..")
+	_ = os.Chdir("..")
+	
+	folderName := "storage" + n.Ip
+	CreateDir(folderName)
+	_ = os.Chdir(folderName)
+
+	CreateFile("succData.txt")
+	CreateFile("nodeData.txt")
+	CreateFile("predData.txt")
+
+	_ = os.Chdir("..")
+	_ = os.Chdir("new_git")	
+	_ = os.Chdir("src")	
 }

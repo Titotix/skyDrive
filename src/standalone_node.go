@@ -44,24 +44,39 @@ func main() {
 	*/
 
 	defaultPort = "9999"
+	var nodePort string
 	fmt.Printf("\nNew node is starting...\n")
 
-	fmt.Printf("Port for this node: ")
+	fmt.Printf("IP for this node. Keep empty for localhost: ")
 	scanner := bufio.NewScanner(os.Stdin)
 	for scanner.Scan() {
 		{
 			break
 		}
 	}
-	nodePort := scanner.Text()
+	nodeIp := scanner.Text()
+	if nodeIp == "" {
+		fmt.Println("Creating a localhost node")
+		nodeIp = "localhost"
+		fmt.Printf("Port for this node in localhost : ")
+		for scanner.Scan() {
+			{
+				break
+			}
+		}
+		nodePort = scanner.Text()
+	} else {
+		nodePort = defaultPort
+	}
 
 	firstNode := createFirstNode("localhost", "5555")
-	*thisNode = createNode(nodePort)
+	*thisNode = makeDHTNode(nodeIp, nodePort)
 
 	thisNode.join(firstNode)
 
 	//Enable listening for rpc
 	thisNode.listenHTTP(nodePort)
+	go thisNode.checkFingers(1000)
 
 	fmt.Printf("\nThis node:\n")
 	thisNode.print()

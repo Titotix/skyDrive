@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"log"
+	"time"
 )
 
 type ComparableNode struct {
@@ -29,10 +30,6 @@ type DHTnode struct {
 	storagePath    string
 	storageContent string
 	Fingers        []*Finger
-	//	Predecessors   []*Node // larger index number = further away in ring
-	//	Successors     []*Node // same as above
-	joinViaIp   string
-	joinViaPort string
 }
 
 /*
@@ -93,28 +90,25 @@ func createFirstNode(host string, port string) BasicNode {
 	return firstNode
 }
 
-func createNode(port string) DHTnode {
+func createLocalNode(port string) DHTnode {
 
 	//TODO get ip  addr
 	NodeIp := "localhost"
 	NodePort := port
 
-	joinViaIp := "localhost"
-	joinViaPort := "1111"
-
-	node := makeDHTNode(NodeIp, NodePort, joinViaIp, joinViaPort)
+	node := makeDHTNode(NodeIp, NodePort)
 
 	return node
 }
 
-func makeDHTNode(NodeIp string, NodePort string, joinViaIp string, joinViaPort string) DHTnode {
+func makeDHTNode(NodeIp string, NodePort string) DHTnode {
 
 	IdStr := sha1hash(NodeIp + NodePort)
 	IdByte, _ := hex.DecodeString(IdStr)
 
 	basicNode := BasicNode{ComparableNode{IdStr, NodeIp, NodePort}, IdByte}
 	simpleNode := Node{basicNode, *new(BasicNode), *new(BasicNode)}
-	node := DHTnode{simpleNode, "", "", nil, joinViaIp, joinViaPort}
+	node := DHTnode{simpleNode, "", "", nil}
 
 	m := 160
 	for i := 0; i < m; i++ {
@@ -436,16 +430,16 @@ func (self *DHTnode) UpdateFingerFromDeadOne(arg *ArgUpdateFingerFromDeadOne, re
 			fmt.Printf("\nupdate Dead :fger%d=deadNode", i+1)
 			//easy update of fingers with his successor
 			self.Fingers[i].BasicNode = self.Fingers[i].Successor
-			next, _ := add(self.Fingers[i].Successor.Id, 1)
-			self.Fingers[i].Successor = self.findSuccessor(next).BasicNode
-			//TODO update also fingers predecessor
+			next := self.Fingers[i].getSuccessor()
+			self.Fingers[i].Successor = next
+			self.Fingers[i].Predecessor = self.Fingers[i].getPredecessor()
 		}
 	}
 	//Update all node counter clockwise
 	p := self.Predecessor
 	fmt.Printf("\nupdate Dead :p=\"%s\"", p.Id)
 	//we have to stop when p reach is arg.Node (when p is the deadNode)
-	if p.Id != arg.DeadNode.Id {
+	if p.Id != arg.DeadNode.Id && p.Id != thisNode.Id && p.getPredecessor().Id != p.getSuccessor().Id {
 		p.updateFingerFromDeadOne(arg.DeadNode)
 	} else {
 		//We finished the counter clockwise of nodes
@@ -555,4 +549,26 @@ func (self *DHTnode) GetPredecessor(arg *ArgEmpty, reply *BasicNode) error {
 func (self *DHTnode) GetSuccessor(arg *ArgEmpty, reply *BasicNode) error {
 	*reply = self.Successor
 	return nil
+}
+
+//Check if i finger of self is alive or not
+func (self *DHTnode) isFingerAlive(i int) bool {
+	return isAlive(self.Fingers[i].BasicNode)
+}
+
+/*
+Check all fingers of self with interval between each finger
+ param : time in Millisecond  between fingers check
+ IMPORTANT : has to be launch has***** thread *****
+*/
+func (self *DHTnode) checkFingers(interval time.Duration) {
+	for {
+		for i := 0; i < m; i++ {
+			if !self.isFingerAlive(i) {
+				handleDeadNode(self.Fingers[i].BasicNode)
+			}
+
+			time.Sleep(interval * time.Millisecond)
+		}
+	}
 }

@@ -594,7 +594,7 @@ type ArgGetting struct {
 	Key string
 }
 
-func (n *BasicNode) GetData(arg *ArgGetting, dataGotten *bool) error {
+func (n *BasicNode) GetData(arg *ArgGetting, dataFound *string) error {
 
 	key := arg.Key
 
@@ -603,67 +603,49 @@ func (n *BasicNode) GetData(arg *ArgGetting, dataGotten *bool) error {
 	_ = os.Chdir("storage")
 
 	storageFile, err := os.Open("nodeData.txt")
+	if err != nil {
+		fmt.Printf("failed to open nodeData.txt")
+		log.Fatal(err)
+	}
+	defer storageFile.Close()
+
+	reader := bufio.NewReader(storageFile)
+	searchDone := false
+	fmt.Printf("\n\nFiles stored in %s space:\n", arg.storageSpace)
+	for (!searchDone) {
+		storedKeyDelim, err := reader.ReadBytes(',')
 		if err != nil {
-			fmt.Printf("failed to open nodeData.txt")
-			log.Fatal(err)
+			if err != io.EOF {
+				log.Fatal(err)
+			}
 		}
-		defer storageFile.Close()
-
-		reader := bufio.NewReader(storageFile)
-		searchDone := false
-		fmt.Printf("\n\nFiles stored in %s space:\n", arg.storageSpace)
-		for (!searchDone) {
-			storedKeyDelim, err := reader.ReadBytes(',')
-			if err != nil {
-				if err != io.EOF {
-					log.Fatal(err)
-				}
+		storedKey := bytes.TrimSuffix(storedKeyDelim, []byte(","))
+		data, err := reader.ReadBytes('\n')
+		if err != nil {
+			if err != io.EOF {
+				log.Fatal(err)
 			}
-			storedKey := bytes.TrimSuffix(storedKeyDelim, []byte(","))
-			data, err := reader.ReadBytes('\n')
-			if err != nil {
-				if err != io.EOF {
-					log.Fatal(err)
-				}
-			}
-			if (len(data)) == 0 {
-				fmt.Printf("key not found in nodeData.txt")
+		}
+		if (len(data)) == 0 {
+			*dataFound = "no data was found"
+			searchDone = true
+		} else {
+			if storedKey == key {
+				*dataFound = data
 				searchDone = true
-			} else {
-				if storedKey == key
-				fmt.Printf("key:%s\n", key)
-				fmt.Printf("data:%s\n", data)
 			}
 		}
-		storageFile.Close()
+	}
+	storageFile.Close()
 
-		_ = os.Chdir("..")
-		_ = os.Chdir("new_git")	
-		_ = os.Chdir("src")	
+	_ = os.Chdir("..")
+	_ = os.Chdir("new_git")	
+	_ = os.Chdir("src")	
 
-		*dataGotten = true;
-		return nil
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-	
-
-
+	return nil
 }
+
+
 
 
 type ArgStorage struct {

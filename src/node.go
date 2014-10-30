@@ -536,6 +536,28 @@ func (self *DHTnode) isMyFinger(node Finger) bool {
 
 
 
+func (thisNode *Node) uploadData (unhashedKey string, data string) {
+
+	hashedKey := sha1hash(unhashedKey)
+	arg := &ArgLookup{hashedKey}
+	reply := nil
+	err := thisNode.findSuccessor(arg, &reply)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	nodeToStoreAt := reply.BasicNode
+
+	// set up ip:port connection
+	
+	arg := &ArgStorage{hashedKey, data, "node"}
+	dataStored := false
+	err := nodeToStoreAt.StoreData(arg, &dataStored)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
 
 
 type ArgStorage struct {
@@ -551,6 +573,11 @@ func (n *BasicNode) StoreData(arg *ArgStorage, dataStored *bool) error {
 	data := arg.Data
 	storageSpace := arg.StorageSpace
 	appendDataToStorage(key, data, storageSpace)
+	if storageSpace == "node" {		
+		replicateData("node", n.predeccessor, "node")
+		replicateData("node", n.successor, "node")
+	}
+
 	*dataStored = true
 	return nil
 }

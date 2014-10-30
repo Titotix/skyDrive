@@ -41,6 +41,7 @@ type ArgListing struct {
 }
 
 type ArgStatus struct{}
+type ArgEmpty struct{}
 
 type ArgUpdateFingerFromDeadOne struct {
 	DeadNode BasicNode
@@ -61,18 +62,18 @@ type ArgDeleteData struct {
 Abstract RPC for DeleteData method
 @arg : ArgDeleteData{ storageSpace, key}
 */
-func (self *DHTnode) callDeleteData(clientSocket *rpc.Client, arg *ArgDeleteData) *DHTnode {
+func (self *DHTnode) callDeleteData(clientSocket *rpc.Client, arg *ArgDeleteData) bool {
 	var reply bool
 	err := clientSocket.Call("DHTnode.DeleteData", arg, &reply)
 	if err != nil {
 		log.Fatal("remote DeleteData error on :", self.Ip, ":", self.Port, " ", err)
 	}
-	return &reply
+	return reply
 }
 
 //Abstract callDeleteData method
 // nodeTarget is the node where rpc is computed
-func (nodeTarget *DHTnode) deleteDataRemote(storageSpace string, key string) *DHTnode {
+func (nodeTarget *DHTnode) deleteDataRemote(storageSpace string, key string) bool {
 
 	clientSocket := connect(nodeTarget.Ip, nodeTarget.Port)
 	arg := ArgDeleteData{storageSpace, key}
@@ -85,18 +86,18 @@ func (nodeTarget *DHTnode) deleteDataRemote(storageSpace string, key string) *DH
 Abstract RPC for StoreData method
 @arg : ArgStoreData{ key, data, storageSpace}
 */
-func (self *DHTnode) callStoreData(clientSocket *rpc.Client, arg *ArgStoreData) *DHTnode {
+func (self *DHTnode) callStoreData(clientSocket *rpc.Client, arg *ArgStoreData) bool {
 	var reply bool
 	err := clientSocket.Call("DHTnode.StoreData", arg, &reply)
 	if err != nil {
 		log.Fatal("remote StoreData error on :", self.Ip, ":", self.Port, " ", err)
 	}
-	return &reply
+	return reply
 }
 
 //Abstract callStoreData method
 // nodeTarget is the node where rpc is computed
-func (nodeTarget *DHTnode) storeDataRemote(key string, data string, storageSpace string) *DHTnode {
+func (nodeTarget *DHTnode) storeDataRemote(key string, data string, storageSpace string) bool {
 
 	clientSocket := connect(nodeTarget.Ip, nodeTarget.Port)
 	arg := ArgStoreData{key, data, storageSpace}
@@ -166,6 +167,82 @@ func (nodeTarget *BasicNode) updateFingerTable(s Node, i int) {
 		clientSocket := connect(nodeTarget.Ip, nodeTarget.Port)
 		callUpdateFingerTable(clientSocket, *nodeTarget, arg)
 		clientSocket.Close()
+	}
+}
+
+func callGetPredecessor(clientSocket *rpc.Client, nodeTarget BasicNode, arg *ArgEmpty) BasicNode {
+	var reply BasicNode
+	fmt.Printf("\nGetPredecessor RPC:\"%s\"\n", nodeTarget.Id)
+	err := clientSocket.Call("DHTnode.GetPredecessor", arg, &reply)
+	if err != nil {
+		if false == handleDeadNode(clientSocket, nodeTarget, err) {
+			log.Fatal("remote getPredecessor error:", err)
+		} else {
+			//The node is dead, happy predecessor deadNode !
+			deadPred := thisNode.findPredecessor(nodeTarget.Id)
+			if deadPred.Id == nodeTarget.Id {
+				log.Fatal("Shit happens")
+			} else {
+
+				reply = deadPred.BasicNode
+			}
+		}
+	}
+	return reply
+}
+
+func (nodeTarget *BasicNode) getPredecessor() BasicNode {
+
+	arg := new(ArgEmpty)
+	if nodeTarget.Id == thisNode.Id {
+		// execute in local
+		//fmt.Println("exec in local")
+		reply := new(BasicNode)
+		_ = thisNode.GetPredecessor(arg, reply)
+		return *reply
+	} else {
+		clientSocket := connect(nodeTarget.Ip, nodeTarget.Port)
+		reply := callGetPredecessor(clientSocket, *nodeTarget, arg)
+		clientSocket.Close()
+		return reply
+	}
+}
+
+func callGetSuccessor(clientSocket *rpc.Client, nodeTarget BasicNode, arg *ArgEmpty) BasicNode {
+	var reply BasicNode
+	fmt.Printf("\nGetSuccessor RPC:\"%s\"\n", nodeTarget.Id)
+	err := clientSocket.Call("DHTnode.GetSuccessor", arg, &reply)
+	if err != nil {
+		if false == handleDeadNode(clientSocket, nodeTarget, err) {
+			log.Fatal("remote getSuccessor error:", err)
+		} else {
+			//The node is dead, happy predecessor deadNode !
+			deadSucc := thisNode.findSuccessor(nodeTarget.Id)
+			if deadSucc.Id == nodeTarget.Id {
+				log.Fatal("Shit happens")
+			} else {
+
+				reply = deadSucc.BasicNode
+			}
+		}
+	}
+	return reply
+}
+
+func (nodeTarget *BasicNode) getSuccessor() BasicNode {
+
+	arg := new(ArgEmpty)
+	if nodeTarget.Id == thisNode.Id {
+		// execute in local
+		//fmt.Println("exec in local")
+		reply := new(BasicNode)
+		_ = thisNode.GetSuccessor(arg, reply)
+		return *reply
+	} else {
+		clientSocket := connect(nodeTarget.Ip, nodeTarget.Port)
+		reply := callGetSuccessor(clientSocket, *nodeTarget, arg)
+		clientSocket.Close()
+		return reply
 	}
 }
 

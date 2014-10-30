@@ -42,7 +42,7 @@ func checkStatus(n *Node, interval time.Duration) {
 			//blockRemoteAccess("node", "succ")
 
 			//TODO
-			reconnectRing(n.Successor)
+			n.getPredecessor().reconnectRing(n.Successor)
 			replicateData("succ", &n.Successor, "node") // restores lost data to new sucessor
 			replicateData("node", &n.Successor, "pred") // replicates own data to new succ
 			//allowRemoteAccess("node", "succ")

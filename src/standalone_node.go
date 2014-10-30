@@ -27,10 +27,7 @@ func main() {
 	//fmt.Println("addr : " + net.InterfaceAddrs.String())
 	//fmt.Println("addr : " + net.InterfaceAddrs[1].String())
 	thisNode = new(DHTnode)
-	thisNode.StorageInit()
-
-	// Testing to store data
-	thisNode.uploadData("testkey", "testdata")
+	//thisNode.StorageInit()
 
 	/*
 		//dataStored := false;

@@ -1,13 +1,9 @@
 package main
 
 import (
-	"bufio"
 	"encoding/hex"
 	"fmt"
-	"io"
 	"log"
-	"os"
-	"strings"
 )
 
 type ComparableNode struct {
@@ -549,4 +545,14 @@ func (self *DHTnode) isMyFinger(node Finger) bool {
 func (self *DHTnode) reconnectRing(deadNode DHTnode) {
 	self.Successor = self.Fingers[0].Successor
 	self.updateFingerFromDeadOne(deadNode.BasicNode)
+}
+
+func (self *DHTnode) GetPredecessor(arg *ArgEmpty, reply *BasicNode) error {
+	*reply = self.Predecessor
+	return nil
+}
+
+func (self *DHTnode) GetSuccessor(arg *ArgEmpty, reply *BasicNode) error {
+	*reply = self.Successor
+	return nil
 }

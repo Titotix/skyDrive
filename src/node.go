@@ -535,6 +535,24 @@ func (self *DHTnode) isMyFinger(node Finger) bool {
 //
 
 
+func (thisNode *Node) retrieveData (unhashedKey) {
+
+	hashedKey := sha1hash(unhashedKey)
+	arg := &ArgLookup{hashedKey}
+	reply := nil
+	err := thisNode.findSuccessor(arg, &reply)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	storedAtNode := reply.BasicNode
+
+	err := storedAtNode.getDataRemote(hashedKey)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
 func (thisNode *Node) removeData (storageSpace string, unhashedKey ) {
 
 	hashedKey := sha1hash(unhashedKey)
@@ -551,8 +569,6 @@ func (thisNode *Node) removeData (storageSpace string, unhashedKey ) {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-
 }
 
 func (thisNode *Node) uploadData (unhashedKey string, data string) {
@@ -573,6 +589,81 @@ func (thisNode *Node) uploadData (unhashedKey string, data string) {
 	}
 }
 
+
+type ArgGetting struct {
+	Key string
+}
+
+func (n *BasicNode) GetData(arg *ArgGetting, dataGotten *bool) error {
+
+	key := arg.Key
+
+	_ = os.Chdir("..")
+	_ = os.Chdir("..")
+	_ = os.Chdir("storage")
+
+	storageFile, err := os.Open("nodeData.txt")
+		if err != nil {
+			fmt.Printf("failed to open nodeData.txt")
+			log.Fatal(err)
+		}
+		defer storageFile.Close()
+
+		reader := bufio.NewReader(storageFile)
+		searchDone := false
+		fmt.Printf("\n\nFiles stored in %s space:\n", arg.storageSpace)
+		for (!searchDone) {
+			storedKeyDelim, err := reader.ReadBytes(',')
+			if err != nil {
+				if err != io.EOF {
+					log.Fatal(err)
+				}
+			}
+			storedKey := bytes.TrimSuffix(storedKeyDelim, []byte(","))
+			data, err := reader.ReadBytes('\n')
+			if err != nil {
+				if err != io.EOF {
+					log.Fatal(err)
+				}
+			}
+			if (len(data)) == 0 {
+				fmt.Printf("key not found in nodeData.txt")
+				searchDone = true
+			} else {
+				if storedKey == key
+				fmt.Printf("key:%s\n", key)
+				fmt.Printf("data:%s\n", data)
+			}
+		}
+		storageFile.Close()
+
+		_ = os.Chdir("..")
+		_ = os.Chdir("new_git")	
+		_ = os.Chdir("src")	
+
+		*dataGotten = true;
+		return nil
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	
+
+
+}
 
 
 type ArgStorage struct {

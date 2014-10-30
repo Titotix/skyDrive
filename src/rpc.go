@@ -36,6 +36,37 @@ type ArgDeleteData struct {
 	Key string
 } 
 
+type ArgGetData struct {
+	Key string
+} 
+
+
+/*
+Abstract RPC for GetData method
+@arg : ArgDeleteData{ storageSpace, key}
+*/
+func (self *DHTnode) callGetData(clientSocket *rpc.Client, arg *ArgGetData) *DHTnode {
+	var reply bool
+	err := clientSocket.Call("DHTnode.GetData", arg, &reply)
+	if err != nil {
+		log.Fatal("remote GetData error on :", self.Ip, ":", self.Port, " ", err)
+	}
+	return &reply
+}
+
+//Abstract callGetData method
+// nodeTarget is the node where rpc is computed
+func (nodeTarget *DHTnode) getDataRemote(key string) *DHTnode {
+
+	clientSocket := connect(nodeTarget.Ip, nodeTarget.Port)
+	arg := ArgGetData{key}
+	reply := nodeTarget.callGetData(clientSocket, &arg)
+	clientSocket.Close()
+	return reply
+}
+
+
+
 /*
 Abstract RPC for DeleteData method
 @arg : ArgDeleteData{ storageSpace, key}

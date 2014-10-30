@@ -536,17 +536,13 @@ func (self *DHTnode) isMyFinger(node Finger) bool {
 
 
 
-type ArgDeletion struct {
-	StorageSpace string
-	Key string
-}
+
 
 type ArgStorage struct {
 	Key string
 	Data string
 	StorageSpace string
 }
-
 
 // stores data at current node, can be called from another node
 func (n *BasicNode) StoreData(arg *ArgStorage, dataStored *bool) error {
@@ -558,7 +554,6 @@ func (n *BasicNode) StoreData(arg *ArgStorage, dataStored *bool) error {
 	*dataStored = true
 	return nil
 }
-
 
 // used by StoreData()
 func appendDataToStorage(key string, data string, storageSpace string) {
@@ -596,6 +591,10 @@ func appendDataToStorage(key string, data string, storageSpace string) {
 }
 
 
+type ArgDeletion struct {
+	StorageSpace string
+	Key string
+}
 
 // deletes key-data pair, can be called from another node
 func (n *DHTnode) DeleteData (arg *ArgDeletion, dataDeleted *bool) error {
@@ -696,19 +695,22 @@ func (n *DHTnode) NodeStatus(arg *ArgStatus, statusReply *bool) error {
 }
 
 
+type ArgListing struct {
+	storageSpace string
+}
+
 // prints all key/data-pairs in one of the storage spaces of the node
-func (n *DHTnode) ListStoredData(storageSpace string) {
+func (n *DHTnode) ListStoredData (arg *ArgListing, dataListed *bool) error {
+//func (n *DHTnode) ListStoredData(storageSpace string) {
 
 	_ = os.Chdir("..")
 	_ = os.Chdir("..")
 	_ = os.Chdir("storage")
 
-	fmt.Printf("about to open nodeData.txt")
-
 	filename := ""
-	if storageSpace == "node" {
+	if arg.storageSpace == "node" {
 		filename = "nodeData.txt"
-	} else if storageSpace == "succ" {
+	} else if arg.storageSpace == "succ" {
 		filename = "succData.txt"
 	} else {
 		filename = "predData.txt"
@@ -723,7 +725,7 @@ func (n *DHTnode) ListStoredData(storageSpace string) {
 
 	reader := bufio.NewReader(storageFile)
 	storageEOF := false
-	fmt.Printf("\n\nFiles stored in %s space:\n", storageSpace)
+	fmt.Printf("\n\nFiles stored in %s space:\n", arg.storageSpace)
 	for (!storageEOF) {
 		key_delim, err := reader.ReadBytes(',')
 		if err != nil {
@@ -750,6 +752,9 @@ func (n *DHTnode) ListStoredData(storageSpace string) {
 	_ = os.Chdir("..")
 	_ = os.Chdir("new_git")	
 	_ = os.Chdir("src")	
+
+	*dataListed = true;
+	return nil
 }
 
 // inits a folder (ip for unique name when on same computer) and files for storing keys-data pair if they dont exist

@@ -25,6 +25,85 @@ type ArgFirstUpdate struct {
 	secondNode Node
 }
 
+type ArgStoreData struct {
+	Key string
+	Data string
+	StorageSpace string 
+} 
+
+type ArgDeleteData struct {
+	StorageSpace string
+	Key string
+} 
+
+/*
+Abstract RPC for StoreData method
+@arg : ArgLookup{ key, data, storageSpace}
+*/
+func (self *DHTnode) callDeleteData(clientSocket *rpc.Client, arg *ArgDeleteData) *DHTnode {
+	var reply bool
+	err := clientSocket.Call("DHTnode.DeleteData", arg, &reply)
+	if err != nil {
+		log.Fatal("remote DeleteData error on :", self.Ip, ":", self.Port, " ", err)
+	}
+	return &reply
+}
+
+//Abstract callStoreData method
+// nodeTarget is the node where rpc is computed
+func (nodeTarget *DHTnode) deleteDataRemote(storageSpace string, key string) *DHTnode {
+
+	clientSocket := connect(nodeTarget.Ip, nodeTarget.Port)
+	arg := ArgDeleteData{storageSpace, key}
+	reply := nodeTarget.callDeleteData(clientSocket, &arg)
+	clientSocket.Close()
+	return reply
+}
+
+
+
+/*
+Abstract RPC for StoreData method
+@arg : ArgLookup{ key, data, storageSpace}
+*/
+func (self *DHTnode) callStoreData(clientSocket *rpc.Client, arg *ArgStoreData) *DHTnode {
+	var reply bool
+	err := clientSocket.Call("DHTnode.StoreData", arg, &reply)
+	if err != nil {
+		log.Fatal("remote StoreData error on :", self.Ip, ":", self.Port, " ", err)
+	}
+	return &reply
+}
+
+//Abstract callStoreData method
+// nodeTarget is the node where rpc is computed
+func (nodeTarget *DHTnode) storeDataRemote(key string, data string, storageSpace string) *DHTnode {
+
+	clientSocket := connect(nodeTarget.Ip, nodeTarget.Port)
+	arg := ArgStoreData{key, data, storageSpace}
+	reply := nodeTarget.callStoreData(clientSocket, &arg)
+	clientSocket.Close()
+	return reply
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /*
 Abstract RPC for Lookup method
 @arg : ArgLookup{nodeTarget.Successor, keyTarget}

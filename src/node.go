@@ -548,8 +548,12 @@ func (thisNode *Node) uploadData (unhashedKey string, data string) {
 
 	nodeToStoreAt := reply.BasicNode
 
-	// set up ip:port connection
-	
+	// setting up network connection to other node
+	client := connectToNode(nodeToStoreAt)
+
+
+	client.storeRemote
+		
 	arg := &ArgStorage{hashedKey, data, "node"}
 	dataStored := false
 	err := nodeToStoreAt.StoreData(arg, &dataStored)

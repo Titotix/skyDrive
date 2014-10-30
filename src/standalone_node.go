@@ -28,12 +28,15 @@ func main() {
 	//fmt.Println("addr : " + net.InterfaceAddrs[1].String())
 	thisNode = new(DHTnode)
 	thisNode.StorageInit()
+
+	
+	// Testing to store data
+	thisNode.uploadData("testkey", "testdata")
 	
 	/*
-	// Testing to store data on local node
-	dataStored := false;
-	argStore := &ArgStorage{sha1hash("testkey"), "testdata", "node"}
-	err := thisNode.StoreData(argStore, &dataStored)
+	//dataStored := false;
+	//argStore := &ArgStorage{sha1hash("testkey"), "testdata", "node"}
+	//err := thisNode.StoreData(argStore, &dataStored)
 
 	// Testing to list data stored on local node
 	dataListed := false;

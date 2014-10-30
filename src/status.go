@@ -21,7 +21,6 @@ func checkStatus(n *Node, interval time.Duration) {
 	//var statusReply bool
 	//arg := &ArgStatus{}
 	for {
-		fmt.Printf("node." + n.Id + ": ")
 		isAlive := n.nodeStatus()
 		if isAlive == true {
 			fmt.Printf("ok\n")

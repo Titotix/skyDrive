@@ -261,7 +261,6 @@ Available for rpc
 func (self *DHTnode) join(joinedNode BasicNode) {
 	if isAlive(joinedNode) {
 		self.initFingerTable(joinedNode)
-		self.printFingers()
 		self.updateOthers()
 	} else {
 		//First node on the ring
@@ -290,7 +289,6 @@ func (self *DHTnode) initFingerTable(joinedNode BasicNode) {
 	self.Successor = successor.BasicNode
 
 	//findSuccessor give back Predecessor ?
-	fmt.Println("successor.Pred :" + successor.Predecessor.Id)
 	self.Predecessor = successor.Predecessor
 	self.Fingers[0].Predecessor = self.BasicNode
 
@@ -324,8 +322,6 @@ func (self *DHTnode) initFingerSuccessor(joinedNode BasicNode) {
 			next, _ := add(self.Fingers[i].Id, 1)
 			successor := joinedNode.findSuccessor(next)
 
-			fmt.Printf("\n ***initFingerSuccessor : successor of next (finger %d): \n", i+1)
-			successor.print()
 			// if finger i key is after joinedNode or equal
 			if between(joinedNode.IdByte, self.IdByte, self.Fingers[i].keyByte) {
 
@@ -423,6 +419,38 @@ func (self *DHTnode) UpdateFingerTable(arg *ArgUpdateFingerTable, reply *Node) e
 	return nil
 }
 
+/**
+* self has to be the predecessor of the deadNode
+*
+ */
+func (self *DHTnode) UpdateFingerFromDeadOne(arg *ArgUpdateFingerFromDeadOne, reply *Node) error {
+	//Could be improve in considering predecessor finger which point to the same node
+	for i := 0; i < m; i++ {
+		//is self fingers contains the dead node ?
+		if self.Fingers[i].Id == arg.DeadNode.Id {
+			fmt.Printf("\nupdate Dead :fger%d=deadNode", i+1)
+			//easy update of fingers with his successor
+			self.Fingers[i].BasicNode = self.Fingers[i].Successor
+			next, _ := add(self.Fingers[i].Successor.Id, 1)
+			self.Fingers[i].Successor = self.findSuccessor(next).BasicNode
+			//TODO update also fingers predecessor
+		}
+	}
+	//Update all node counter clockwise
+	p := self.Predecessor
+	fmt.Printf("\nupdate Dead :p=\"%s\"", p.Id)
+	//we have to stop when p reach is arg.Node (when p is the deadNode)
+	if p.Id != arg.DeadNode.Id {
+		p.updateFingerFromDeadOne(arg.DeadNode)
+	} else {
+		//We finished the counter clockwise of nodes
+		//So self.Predecessor is right now the dead node
+		deadNodePred := self.findPredecessor(arg.DeadNode.Id)
+		self.Predecessor = deadNodePred.BasicNode
+	}
+	return nil
+}
+
 //Useless reply
 func (self *DHTnode) UpdateFingerTableFirstNode(arg *ArgUpdateFingerTable, reply *Node) error {
 	self.Successor = arg.Node.BasicNode
@@ -467,7 +495,6 @@ func (self *DHTnode) FindPredecessor(arg *ArgLookup, reply *Node) error {
 func (self *DHTnode) ClosestPrecedingFinger(arg *ArgLookup, reply *Node) error {
 	idByte := arg.KeyByte
 	//fmt.Println("arg.Key :" + arg.Key)
-	printIdByte(arg.KeyByte)
 	for i := m - 1; i > -1; i-- {
 		if inside(self.IdByte, idByte, self.Fingers[i].IdByte) {
 			*reply = self.Fingers[i].Node
@@ -486,15 +513,8 @@ func (self *DHTnode) ClosestPrecedingFinger(arg *ArgLookup, reply *Node) error {
 
 func (self *DHTnode) FindSuccessor(arg *ArgLookup, reply *Node) error {
 	predecessor := self.findPredecessor(arg.Key)
-	fmt.Println("\n**asked :" + arg.Key)
-	new := predecessor.BasicNode
-	new.print()
 	reply.Predecessor = predecessor.BasicNode
-	//fmt.Println("reply :" + reply.Id + "reply pred " + reply.Predecessor.Id)
-	//TODO BUG les fingers ne comportent pas leur Successor !
 	reply.BasicNode = predecessor.Successor
-	fmt.Println("\nreply :")
-	reply.print()
 	if reply.Id == "" {
 		log.Fatal("FindSuccessor error : reply is empty")
 	}
@@ -517,16 +537,5 @@ func (self *DHTnode) isMyFinger(node Finger) bool {
 **/
 func (self *DHTnode) reconnectRing(deadNode DHTnode) {
 	self.Successor = self.Fingers[0].Successor
-	/*
-		deadNode is supposed to be the successor of self
-		self.successor = finger[0].successor
-		then update finger table...
-	*/
-
+	self.updateFingerFromDeadOne(deadNode.BasicNode)
 }
-
-//func (self *DHTnode) getPredecessor() BasicNode {
-//	for i:= m-1; i > -1; i-- {
-//		if self.Fingers[i].Id != self.Id {
-//			if self.Fingers[i].Node.findSuccessor(self.Fingers[i].Id)
-//

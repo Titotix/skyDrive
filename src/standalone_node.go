@@ -42,17 +42,11 @@ func main() {
 	firstNode := createFirstNode("localhost", "5555")
 	*thisNode = createNode(nodePort)
 
-	//thisNode.updateAllFingerTables()
-
-	//thisNode.startNodeListener()
-
-	//thisNode.printRing()
 	thisNode.join(firstNode)
+
 	//Enable listening for rpc
 	thisNode.listenHTTP(nodePort)
 
-	//thisNode.printFingers()
-	//printRing(*thisNode)
 	fmt.Printf("\nThis node:\n")
 	thisNode.print()
 	//for {

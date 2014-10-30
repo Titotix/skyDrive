@@ -10,7 +10,7 @@ import (
 
 //GLobal variable
 var thisNode *DHTnode
-var m int
+var m int = 160
 var defaultPort string
 
 /*
@@ -27,24 +27,20 @@ func main() {
 	//fmt.Println("addr : " + net.InterfaceAddrs.String())
 	//fmt.Println("addr : " + net.InterfaceAddrs[1].String())
 	thisNode = new(DHTnode)
-	thisNode.StorageInit()
+	//thisNode.StorageInit()
 
-	
-	// Testing to store data
-	thisNode.uploadData("testkey", "testdata")
-	
 	/*
-	//dataStored := false;
-	//argStore := &ArgStorage{sha1hash("testkey"), "testdata", "node"}
-	//err := thisNode.StoreData(argStore, &dataStored)
+		//dataStored := false;
+		//argStore := &ArgStorage{sha1hash("testkey"), "testdata", "node"}
+		//err := thisNode.StoreData(argStore, &dataStored)
 
-	// Testing to list data stored on local node
-	dataListed := false;
-	argList := &ArgListing{"node"}
-	err = thisNode.ListStoredData(argList, &dataListed)
-	if err != nil {
-		log.Fatal(err)
-	}
+		// Testing to list data stored on local node
+		dataListed := false;
+		argList := &ArgListing{"node"}
+		err = thisNode.ListStoredData(argList, &dataListed)
+		if err != nil {
+			log.Fatal(err)
+		}
 	*/
 
 	defaultPort = "9999"
@@ -62,17 +58,11 @@ func main() {
 	firstNode := createFirstNode("localhost", "5555")
 	*thisNode = createNode(nodePort)
 
-	//thisNode.updateAllFingerTables()
-
-	//thisNode.startNodeListener()
-
-	//thisNode.printRing()
 	thisNode.join(firstNode)
+
 	//Enable listening for rpc
 	thisNode.listenHTTP(nodePort)
 
-	//thisNode.printFingers()
-	//printRing(*thisNode)
 	fmt.Printf("\nThis node:\n")
 	thisNode.print()
 	//for {
@@ -94,6 +84,8 @@ func main() {
 	//sendMessage(msg, remoteNodePort)
 
 	//Wait in put for printFingers
+
+	//httpServer()
 	for {
 		for scanner.Scan() {
 			{

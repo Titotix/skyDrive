@@ -45,34 +45,78 @@ func main() {
 
 	defaultPort = "9999"
 	var nodePort string
+	//var nodeIp *string
+	var firstNodeIp string = "172.30.0.154"
 	fmt.Printf("\nNew node is starting...\n")
 
-	fmt.Printf("IP for this node. Keep empty for localhost: ")
+	fmt.Printf("\nIs first Node ? \"yes\" if so.\n")
+
 	scanner := bufio.NewScanner(os.Stdin)
 	for scanner.Scan() {
 		{
 			break
 		}
 	}
-	nodeIp := scanner.Text()
-	if nodeIp == "" {
-		fmt.Println("Creating a localhost node")
-		nodeIp = "localhost"
-		fmt.Printf("Port for this node in localhost : ")
+	first := scanner.Text()
+	var isFirst bool
+	if first == "yes" {
+		isFirst = true
+		nodePort = "5555"
+	} else {
+		isFirst = false
+	}
+
+	if isFirst == false {
+		fmt.Printf("IP for this node. Keep empty for localhost: ")
 		for scanner.Scan() {
 			{
 				break
 			}
 		}
-		nodePort = scanner.Text()
+		thisNode.Ip = scanner.Text()
+		if thisNode.Ip == "" {
+			fmt.Println("nodeIp is empty")
+			fmt.Println("Creating a localhost node")
+			thisNode.Ip = "localhost"
+			firstNodeIp = "localhost"
+			fmt.Printf("ip=%s", thisNode.Ip)
+			fmt.Printf("Port for this node in localhost : ")
+			for scanner.Scan() {
+				{
+					break
+				}
+			}
+			nodePort = scanner.Text()
+		} else {
+			nodePort = defaultPort
+		}
 	} else {
-		nodePort = defaultPort
+		fmt.Println("Do you want to create a localhost first node ? \"yes\" if so.")
+		for scanner.Scan() {
+			{
+				break
+			}
+		}
+		res := scanner.Text()
+		if res == "yes" {
+			firstNodeIp = "localhost"
+			thisNode.Ip = "localhost"
+		} else {
+			thisNode.Ip = firstNodeIp
+
+		}
+		thisNode.Ip = firstNodeIp
 	}
 
-	firstNode := createFirstNode("localhost", "5555")
-	*thisNode = makeDHTNode(nodeIp, nodePort)
+	fmt.Println("Fin all scan")
+	fmt.Printf("\n IP:%s  port:%s", thisNode.Ip, nodePort)
+	firstNode := createFirstNode(firstNodeIp, "5555")
+	fmt.Println("firstNode creation")
+	*thisNode = makeDHTNode(thisNode.Ip, nodePort)
+	fmt.Println("makeDht")
 
 	thisNode.join(firstNode)
+	fmt.Println("Join")
 
 	//Enable listening for rpc
 	thisNode.listenHTTP(nodePort)

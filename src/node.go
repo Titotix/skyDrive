@@ -32,51 +32,6 @@ type DHTnode struct {
 	Fingers        []*Finger
 }
 
-/*
-//DEPRECATED
-func (self *DHTnode) updateIncorrectFingers() {
-
-	start := self.Node
-	newNode := self
-
-	for start != *self.Successor {
-		for i := 0; i < 160; i++ {
-
-			if self.Fingers[i].key >= newNode.Id {
-				PredecessorNode := self.ringLookup(self.Fingers[i].key)
-				responsibleNode := PredecessorNode.Successor
-				self.Fingers[i].Id = responsibleNode.Id[:len(responsibleNode.Id)]
-
-			}
-		}
-		self = self.Successor
-	}
-}
-*/
-
-/*
-DEPRECATED
-func (self *DHTnode) updateAllFingerTables() { // updates all Fingers in fingerTables of all nodes, starts with self
-
-	start := self
-
-	for start != self.Successor {
-		for i := 0; i < 160; i++ {
-			responsibleNode := self.ringLookup(self.Fingers[i].key)
-			self.Fingers[i].Id = responsibleNode.Id[:len(responsibleNode.Id)]
-		}
-		self = self.Successor
-	}
-
-	// filling finger table for last node before starting node
-	for i := 0; i < 160; i++ {
-		responsibleNode := self.ringLookup(self.Fingers[i].key)
-		self.Fingers[i].Id = responsibleNode.Id[:len(responsibleNode.Id)]
-	}
-
-}
-*/
-
 func createFirstNode(host string, port string) BasicNode {
 	var firstNode BasicNode
 	firstNode.Port = port
@@ -92,7 +47,6 @@ func createFirstNode(host string, port string) BasicNode {
 
 func createLocalNode(port string) DHTnode {
 
-	//TODO get ip  addr
 	NodeIp := "localhost"
 	NodePort := port
 
@@ -255,11 +209,13 @@ Available for rpc
 //Work in progress
 func (self *DHTnode) join(joinedNode BasicNode) {
 	if isAlive(joinedNode) {
+		fmt.Println("Debut join")
 		self.initFingerTable(joinedNode)
+		fmt.Println("initFinger")
 		self.updateOthers()
+		fmt.Println("updateOther!")
 	} else {
 		//First node on the ring
-		m := 160
 		for i := 0; i < m; i++ {
 			self.Fingers[i].Node = self.Node
 			self.Fingers[i].Predecessor = self.BasicNode
@@ -310,8 +266,9 @@ func (self *DHTnode) initFingerTable(joinedNode BasicNode) {
 
 //TODO
 func (self *DHTnode) initFingerSuccessor(joinedNode BasicNode) {
-	m := 160
+	fmt.Printf("\nm=%d", m)
 	for i := 0; i < m; i++ {
+		fmt.Printf("\n%d", i)
 		//If finger i point to self node, assign self succcessor to finger successor
 		if self.Fingers[i].Id == self.Id {
 			self.Fingers[i].Successor = self.Successor

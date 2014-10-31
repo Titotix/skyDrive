@@ -117,25 +117,6 @@ func main() {
 
 	fmt.Printf("\nThis node:\n")
 	thisNode.print()
-	//for {
-	//fmt.Println("\nSearch for key: ")
-	//for scanner.Scan() {
-	//	{
-	//		break
-	//	}
-	//}
-	//testKey := scanner.Text()
-	////var responsibleNode DHTnode
-	////_ = thisNode.FingerLookup(&ArgLookup{*thisNode, testKey}, &responsibleNode)
-	//reply := thisNode.findSuccessor(testKey)
-	//fmt.Printf("\nlookup result: %s\n", reply.Id)
-	//}
-	//testHash := sha1hash(testKey)
-
-	//msg := createMessage(thisNodePort, thisNodePort, remoteNodePort, "a", "b")
-	//sendMessage(msg, remoteNodePort)
-
-	//Wait in put for printFingers
 
 	//httpServer()
 	for {

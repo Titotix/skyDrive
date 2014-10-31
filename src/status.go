@@ -18,9 +18,7 @@ func checkStatus(n *Node, interval time.Duration) {
 	for {
 		isAlive := isAlive(n.BasicNode)
 		if isAlive == true {
-			fmt.Printf("ok\n")
 		} else {
-			fmt.Printf("not ok\n")
 
 			//if n.nodeId = node.predecessor {	// predecessor unavailble
 			//blockRemoteAccess("pred", "node")

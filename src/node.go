@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/hex"
-	"fmt"
 	"log"
 	"time"
 )
@@ -134,11 +133,8 @@ func (self *DHTnode) initFingerTable(joinedNode BasicNode) {
 	self.initFingerSuccessor(joinedNode)
 }
 
-//TODO
 func (self *DHTnode) initFingerSuccessor(joinedNode BasicNode) {
-	fmt.Printf("\nm=%d", m)
 	for i := 0; i < m; i++ {
-		fmt.Printf("\n%d", i)
 		//If finger i point to self node, assign self succcessor to finger successor
 		if self.Fingers[i].Id == self.Id {
 			self.Fingers[i].Successor = self.Successor
@@ -254,7 +250,6 @@ func (self *DHTnode) UpdateFingerFromDeadOne(arg *ArgUpdateFingerFromDeadOne, re
 	for i := 0; i < m; i++ {
 		//is self fingers contains the dead node ?
 		if self.Fingers[i].Id == arg.DeadNode.Id {
-			fmt.Printf("\nupdate Dead :fger%d=deadNode", i+1)
 			//easy update of fingers with his successor
 			self.Fingers[i].BasicNode = self.Fingers[i].Successor
 			next := self.Fingers[i].getSuccessor()
@@ -264,7 +259,6 @@ func (self *DHTnode) UpdateFingerFromDeadOne(arg *ArgUpdateFingerFromDeadOne, re
 	}
 	//Update all node counter clockwise
 	p := self.Predecessor
-	fmt.Printf("\nupdate Dead :p=\"%s\"", p.Id)
 	//we have to stop when p reach is arg.Node (when p is the deadNode)
 	if p.Id != arg.DeadNode.Id && p.Id != thisNode.Id && p.getPredecessor().Id != p.getSuccessor().Id {
 		p.updateFingerFromDeadOne(arg.DeadNode)

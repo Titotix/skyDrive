@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/hex"
-	"fmt"
 	"log"
 	"net/rpc"
 )
@@ -163,7 +162,6 @@ keyTarget is the key which we are looking for
 
 func callUpdateFingerTable(clientSocket *rpc.Client, nodeTarget BasicNode, arg *ArgUpdateFingerTable) {
 	var reply Node
-	fmt.Printf("\nupdateFingerTable RPC:\"%s\"\n", nodeTarget.Id)
 	err := clientSocket.Call("DHTnode.UpdateFingerTable", arg, &reply)
 	if err != nil {
 		if false == handleDeadNode(nodeTarget) {
@@ -200,7 +198,6 @@ func (nodeTarget *BasicNode) updateFingerTable(s Node, i int) {
 
 func callGetPredecessor(clientSocket *rpc.Client, nodeTarget BasicNode, arg *ArgEmpty) BasicNode {
 	var reply BasicNode
-	fmt.Printf("\nGetPredecessor RPC:\"%s\"\n", nodeTarget.Id)
 	err := clientSocket.Call("DHTnode.GetPredecessor", arg, &reply)
 	if err != nil {
 		if false == handleDeadNode(nodeTarget) {
@@ -238,7 +235,6 @@ func (nodeTarget *BasicNode) getPredecessor() BasicNode {
 
 func callGetSuccessor(clientSocket *rpc.Client, nodeTarget BasicNode, arg *ArgEmpty) BasicNode {
 	var reply BasicNode
-	fmt.Printf("\nGetSuccessor RPC:\"%s\"\n", nodeTarget.Id)
 	err := clientSocket.Call("DHTnode.GetSuccessor", arg, &reply)
 	if err != nil {
 		if false == handleDeadNode(nodeTarget) {
@@ -276,7 +272,6 @@ func (nodeTarget *BasicNode) getSuccessor() BasicNode {
 
 func callUpdateFingerFromDeadOne(clientSocket *rpc.Client, nodeTarget BasicNode, arg *ArgUpdateFingerFromDeadOne) {
 	var reply Node
-	fmt.Printf("\nupdateFingerFromDeadOne RPC:\"%s\"\n", nodeTarget.Id)
 	err := clientSocket.Call("DHTnode.UpdateFingerFromDeadOne", arg, &reply)
 	if err != nil {
 		if false == handleDeadNode(nodeTarget) {
@@ -309,7 +304,6 @@ func (nodeTarget *BasicNode) updateFingerFromDeadOne(dead BasicNode) {
 
 func callUpdateFingerTableFirstNode(clientSocket *rpc.Client, nodeTarget BasicNode, arg *ArgUpdateFingerTable) {
 	var reply int
-	fmt.Printf("\nupdateFingerFirstNode RPC:\"%s\"\n", nodeTarget.Id)
 	err := clientSocket.Call("DHTnode.UpdateFingerTableFirstNode", arg, &reply)
 	if err != nil {
 		if false == handleDeadNode(nodeTarget) {
@@ -343,7 +337,6 @@ func (nodeTarget *BasicNode) updateFingerTableFirstNode(s Node, i int) {
 
 func callFindSuccessor(clientSocket *rpc.Client, nodeTarget BasicNode, arg *ArgLookup) *Node {
 	var reply Node
-	fmt.Printf("\nFindSuccessor RPC:\"%s\"", nodeTarget.Id)
 	err := clientSocket.Call("DHTnode.FindSuccessor", arg, &reply)
 	if err != nil {
 		if false == handleDeadNode(nodeTarget) {
@@ -384,7 +377,6 @@ func (nodeTarget *BasicNode) findSuccessor(key string) Node {
 
 func callFindPredecessor(clientSocket *rpc.Client, nodeTarget BasicNode, arg *ArgLookup) *Node {
 	var reply Node
-	fmt.Printf("\nFindPred RPC:\"%s\"", nodeTarget.Id)
 	err := clientSocket.Call("DHTnode.FindPredecessor", arg, &reply)
 	if err != nil {
 		if false == handleDeadNode(nodeTarget) {
@@ -425,7 +417,6 @@ func (nodeTarget *BasicNode) findPredecessor(key string) Node {
 
 func callClosestPrecedingFinger(clientSocket *rpc.Client, nodeTarget BasicNode, arg *ArgLookup) *Node {
 	var reply Node
-	fmt.Printf("\nclosestPreceding RPC:\"%s\"", nodeTarget.Id)
 	err := clientSocket.Call("DHTnode.ClosestPrecedingFinger", arg, &reply)
 	if err != nil {
 		log.Fatal("remote closestPrecedingFinger error:", err)
@@ -455,31 +446,30 @@ func (nodeTarget *BasicNode) closestPrecedingFinger(key string) Node {
 	}
 }
 
-func callNodeStatus(clientSocket *rpc.Client, arg *ArgStatus) bool {
-	var reply bool
-	fmt.Printf("\nNodeStatus RPC")
-	err := clientSocket.Call("DHTnode.NodeStatus", arg, &reply)
-	if err != nil {
-		return false
-	}
-	return reply
-}
+//func callNodeStatus(clientSocket *rpc.Client, arg *ArgStatus) bool {
+//	var reply bool
+//	err := clientSocket.Call("DHTnode.NodeStatus", arg, &reply)
+//	if err != nil {
+//		return false
+//	}
+//	return reply
+//}
 
-func (nodeTarget *Node) nodeStatus() bool {
-
-	arg := new(ArgStatus)
-	if nodeTarget.Id == thisNode.Id {
-		// execute in local
-		reply := new(bool)
-		_ = nodeTarget.NodeStatus(arg, reply)
-		return *reply
-	} else {
-		clientSocket := connect(nodeTarget.Ip, nodeTarget.Port)
-		reply := callNodeStatus(clientSocket, arg)
-		clientSocket.Close()
-		return reply
-	}
-}
+//func (nodeTarget *Node) nodeStatus() bool {
+//
+//	arg := new(ArgStatus)
+//	if nodeTarget.Id == thisNode.Id {
+//		// execute in local
+//		reply := new(bool)
+//		_ = nodeTarget.NodeStatus(arg, reply)
+//		return *reply
+//	} else {
+//		clientSocket := connect(nodeTarget.Ip, nodeTarget.Port)
+//		reply := callNodeStatus(clientSocket, arg)
+//		clientSocket.Close()
+//		return reply
+//	}
+//}
 
 /*
 Purpose : handle error in rpc call to dead node.

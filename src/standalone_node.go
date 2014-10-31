@@ -10,7 +10,7 @@ import (
 
 //GLobal variable
 var thisNode *DHTnode
-var m int
+var m int = 160
 var defaultPort string
 
 /*
@@ -27,70 +27,98 @@ func main() {
 	//fmt.Println("addr : " + net.InterfaceAddrs.String())
 	//fmt.Println("addr : " + net.InterfaceAddrs[1].String())
 	thisNode = new(DHTnode)
-	thisNode.StorageInit()
-	
-	/*
-	// Testing to store data on local node
-	dataStored := false;
-	argStore := &ArgStorage{sha1hash("testkey"), "testdata", "node"}
-	err := thisNode.StoreData(argStore, &dataStored)
+	//thisNode.StorageInit()
 
-	// Testing to list data stored on local node
-	dataListed := false;
-	argList := &ArgListing{"node"}
-	err = thisNode.ListStoredData(argList, &dataListed)
-	if err != nil {
-		log.Fatal(err)
-	}
+	/*
+		//dataStored := false;
+		//argStore := &ArgStorage{sha1hash("testkey"), "testdata", "node"}
+		//err := thisNode.StoreData(argStore, &dataStored)
+
+		// Testing to list data stored on local node
+		dataListed := false;
+		argList := &ArgListing{"node"}
+		err = thisNode.ListStoredData(argList, &dataListed)
+		if err != nil {
+			log.Fatal(err)
+		}
 	*/
 
 	defaultPort = "9999"
+	var nodePort string
+	//var nodeIp *string
+	var firstNodeIp string = "172.30.0.154"
 	fmt.Printf("\nNew node is starting...\n")
 
-	fmt.Printf("Port for this node: ")
+	fmt.Printf("\nIs first Node ? \"yes\" if so.\n")
+
 	scanner := bufio.NewScanner(os.Stdin)
 	for scanner.Scan() {
 		{
 			break
 		}
 	}
-	nodePort := scanner.Text()
+	first := scanner.Text()
+	var isFirst bool
+	if first == "yes" {
+		isFirst = true
+		nodePort = "5555"
+	} else {
+		isFirst = false
+	}
 
-	firstNode := createFirstNode("localhost", "5555")
-	*thisNode = createNode(nodePort)
+	if isFirst == false {
+		fmt.Printf("IP for this node. Keep empty for localhost: ")
+		for scanner.Scan() {
+			{
+				break
+			}
+		}
+		thisNode.Ip = scanner.Text()
+		if thisNode.Ip == "" {
+			fmt.Println("Creating a localhost node")
+			thisNode.Ip = "localhost"
+			firstNodeIp = "localhost"
+			fmt.Printf("Port for this node in localhost : ")
+			for scanner.Scan() {
+				{
+					break
+				}
+			}
+			nodePort = scanner.Text()
+		} else {
+			nodePort = defaultPort
+		}
+	} else {
+		fmt.Println("Do you want to create a localhost first node ? \"yes\" if so.")
+		for scanner.Scan() {
+			{
+				break
+			}
+		}
+		res := scanner.Text()
+		if res == "yes" {
+			firstNodeIp = "localhost"
+			thisNode.Ip = "localhost"
+		} else {
+			thisNode.Ip = firstNodeIp
 
-	//thisNode.updateAllFingerTables()
+		}
+		thisNode.Ip = firstNodeIp
+	}
 
-	//thisNode.startNodeListener()
+	firstNode := createFirstNode(firstNodeIp, "5555")
+	*thisNode = makeDHTNode(thisNode.Ip, nodePort)
 
-	//thisNode.printRing()
 	thisNode.join(firstNode)
+
 	//Enable listening for rpc
 	thisNode.listenHTTP(nodePort)
+	go thisNode.checkFingers(1000)
 
-	//thisNode.printFingers()
-	//printRing(*thisNode)
 	fmt.Printf("\nThis node:\n")
 	thisNode.print()
-	//for {
-	//fmt.Println("\nSearch for key: ")
-	//for scanner.Scan() {
-	//	{
-	//		break
-	//	}
-	//}
-	//testKey := scanner.Text()
-	////var responsibleNode DHTnode
-	////_ = thisNode.FingerLookup(&ArgLookup{*thisNode, testKey}, &responsibleNode)
-	//reply := thisNode.findSuccessor(testKey)
-	//fmt.Printf("\nlookup result: %s\n", reply.Id)
-	//}
-	//testHash := sha1hash(testKey)
 
-	//msg := createMessage(thisNodePort, thisNodePort, remoteNodePort, "a", "b")
-	//sendMessage(msg, remoteNodePort)
-
-	//Wait in put for printFingers
+	//httpServer()
 	for {
 		for scanner.Scan() {
 			{

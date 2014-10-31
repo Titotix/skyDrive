@@ -1,16 +1,10 @@
 package main
 
 import (
-	"bytes"
 	"encoding/hex"
-	"fmt"
 	"log"
-	"os"
-	"io"
-	"bufio"
-	"strings"
+	"time"
 )
-
 
 type ComparableNode struct {
 	Id   string
@@ -35,56 +29,7 @@ type DHTnode struct {
 	storagePath    string
 	storageContent string
 	Fingers        []*Finger
-	//	Predecessors   []*Node // larger index number = further away in ring
-	//	Successors     []*Node // same as above
-	joinViaIp   string
-	joinViaPort string
 }
-
-/*
-//DEPRECATED
-func (self *DHTnode) updateIncorrectFingers() {
-
-	start := self.Node
-	newNode := self
-
-	for start != *self.Successor {
-		for i := 0; i < 160; i++ {
-
-			if self.Fingers[i].key >= newNode.Id {
-				PredecessorNode := self.ringLookup(self.Fingers[i].key)
-				responsibleNode := PredecessorNode.Successor
-				self.Fingers[i].Id = responsibleNode.Id[:len(responsibleNode.Id)]
-
-			}
-		}
-		self = self.Successor
-	}
-}
-*/
-
-/*
-DEPRECATED
-func (self *DHTnode) updateAllFingerTables() { // updates all Fingers in fingerTables of all nodes, starts with self
-
-	start := self
-
-	for start != self.Successor {
-		for i := 0; i < 160; i++ {
-			responsibleNode := self.ringLookup(self.Fingers[i].key)
-			self.Fingers[i].Id = responsibleNode.Id[:len(responsibleNode.Id)]
-		}
-		self = self.Successor
-	}
-
-	// filling finger table for last node before starting node
-	for i := 0; i < 160; i++ {
-		responsibleNode := self.ringLookup(self.Fingers[i].key)
-		self.Fingers[i].Id = responsibleNode.Id[:len(responsibleNode.Id)]
-	}
-
-}
-*/
 
 func createFirstNode(host string, port string) BasicNode {
 	var firstNode BasicNode
@@ -99,30 +44,26 @@ func createFirstNode(host string, port string) BasicNode {
 	return firstNode
 }
 
-func createNode(port string) DHTnode {
+func createLocalNode(port string) DHTnode {
 
-	//TODO get ip  addr
 	NodeIp := "localhost"
 	NodePort := port
 
-	joinViaIp := "localhost"
-	joinViaPort := "1111"
-
-	node := makeDHTNode(NodeIp, NodePort, joinViaIp, joinViaPort)
+	node := makeDHTNode(NodeIp, NodePort)
 
 	return node
 }
 
-func makeDHTNode(NodeIp string, NodePort string, joinViaIp string, joinViaPort string) DHTnode {
+func makeDHTNode(NodeIp string, NodePort string) DHTnode {
 
 	IdStr := sha1hash(NodeIp + NodePort)
 	IdByte, _ := hex.DecodeString(IdStr)
 
 	basicNode := BasicNode{ComparableNode{IdStr, NodeIp, NodePort}, IdByte}
 	simpleNode := Node{basicNode, *new(BasicNode), *new(BasicNode)}
-	node := DHTnode{simpleNode, "", "", nil, joinViaIp, joinViaPort}
-    
-    m := 160
+	node := DHTnode{simpleNode, "", "", nil}
+
+	m := 160
 	for i := 0; i < m; i++ {
 		fingerNumber := i + 1
 		newFingerKey, newFingerKeyByte := calcFinger(node.IdByte, fingerNumber, 160)
@@ -133,133 +74,6 @@ func makeDHTNode(NodeIp string, NodePort string, joinViaIp string, joinViaPort s
 	return node
 }
 
-//func (self *DHTnode) addToRing(node *DHTnode) {
-//
-//	/*
-//	   // instead of traverings all nodes from self until finding point of insertion,
-//	   //Fingers of existing nodes should be used
-//	*/
-//
-//	if self.Successor == nil { // new node connects to a single node, forming a ring of two nodes
-//
-//		self.Successor = node
-//		node.Predecessor = self
-//		self.Successors[0].Id = node.Id[:len(node.Id)]
-//		self.Successors[0].NodeIp = node.NodeIp[:len(node.NodeIp)]
-//		self.Successors[0].NodePort = node.NodePort[:len(node.NodePort)]
-//		self.Successors[1].Id = self.Id[:len(self.Id)]
-//		self.Successors[1].NodeIp = self.NodeIp[:len(self.NodeIp)]
-//		self.Successors[1].NodePort = self.NodePort[:len(self.NodePort)]
-//		node.Predecessors[0].Id = self.Id[:len(self.Id)]
-//		node.Predecessors[0].NodeIp = self.NodeIp[:len(self.NodeIp)]
-//		node.Predecessors[0].NodePort = self.NodePort[:len(self.NodePort)]
-//		node.Predecessors[1].Id = node.Id[:len(node.Id)]
-//		node.Predecessors[1].NodeIp = node.NodeIp[:len(node.NodeIp)]
-//		node.Predecessors[1].NodePort = node.NodePort[:len(node.NodePort)]
-//
-//		node.Successor = self
-//		self.Predecessor = node
-//		node.Successors[0].Id = self.Id[:len(self.Id)]
-//		node.Successors[0].NodeIp = self.NodeIp[:len(self.NodeIp)]
-//		node.Successors[0].NodePort = self.NodePort[:len(self.NodePort)]
-//		node.Successors[1].Id = node.Id[:len(node.Id)]
-//		node.Successors[1].NodeIp = node.NodeIp[:len(node.NodeIp)]
-//		node.Successors[1].NodePort = node.NodePort[:len(node.NodePort)]
-//		self.Predecessors[0].Id = node.Id[:len(node.Id)]
-//		self.Predecessors[0].NodeIp = node.NodeIp[:len(node.NodeIp)]
-//		self.Predecessors[0].NodePort = node.NodePort[:len(node.NodePort)]
-//		self.Predecessors[1].Id = self.Id[:len(self.Id)]
-//		self.Predecessors[1].NodeIp = self.NodeIp[:len(self.NodeIp)]
-//		self.Predecessors[1].NodePort = self.NodePort[:len(self.NodePort)]
-//
-//	} else {
-//
-//		for !between([]byte(self.Id), []byte(self.Successors[0].Id), []byte(node.Id)) {
-//
-//			self = self.Successor
-//
-//		}
-//
-//		if self.Successors[1].Id == self.Id { // new node connects to a ring of two nodes
-//
-//			node.Successor = self.Successor
-//			node.Successor.Predecessor = node
-//			node.Successors[0].Id = self.Successors[0].Id[:len(self.Successors[0].Id)]
-//			node.Successors[0].NodeIp = self.Successors[0].NodeIp[:len(self.Successors[0].NodeIp)]
-//			node.Successors[0].NodePort = self.Successors[0].NodePort[:len(self.Successors[0].NodePort)]
-//			node.Successors[1].Id = self.Successors[1].Id[:len(self.Successors[1].Id)]
-//			node.Successors[1].NodeIp = self.Successors[1].NodeIp[:len(self.Successors[1].NodeIp)]
-//			node.Successors[1].NodePort = self.Successors[1].NodePort[:len(self.Successors[1].NodePort)]
-//			node.Successor.Predecessors[0].Id = node.Id[:len(self.Id)]
-//			node.Successor.Predecessors[0].NodeIp = node.NodeIp[:len(self.NodeIp)]
-//			node.Successor.Predecessors[0].NodePort = node.NodePort[:len(self.NodePort)]
-//			node.Successor.Predecessors[1].Id = self.Id[:len(self.Id)]
-//			node.Successor.Predecessors[1].NodeIp = self.NodeIp[:len(self.NodeIp)]
-//			node.Successor.Predecessors[1].NodePort = self.NodePort[:len(self.NodePort)]
-//			node.Successor.Successors[1].Id = node.Id[:len(node.Id)]
-//			node.Successor.Successors[1].NodeIp = node.NodeIp[:len(node.NodeIp)]
-//			node.Successor.Successors[1].NodePort = node.NodePort[:len(node.NodePort)]
-//
-//			self.Successor = node
-//			node.Predecessor = self
-//			self.Successors[0].Id = node.Id[:len(node.Id)]
-//			self.Successors[0].NodeIp = node.NodeIp[:len(node.NodeIp)]
-//			self.Successors[0].NodePort = node.NodePort[:len(node.NodePort)]
-//			self.Successors[1].Id = node.Successors[0].Id[:len(node.Successors[0].Id)]
-//			self.Successors[1].NodeIp = node.Successors[0].NodeIp[:len(node.Successors[0].NodeIp)]
-//			self.Successors[1].NodePort = node.Successors[0].NodePort[:len(node.Successors[0].NodePort)]
-//			node.Predecessors[0].Id = self.Id[:len(self.Id)]
-//			node.Predecessors[0].NodeIp = self.NodeIp[:len(self.NodeIp)]
-//			node.Predecessors[0].NodePort = self.NodePort[:len(self.NodePort)]
-//			node.Predecessors[1].Id = self.Predecessors[0].Id[:len(node.Predecessors[0].Id)]
-//			node.Predecessors[1].NodeIp = self.Predecessors[0].NodeIp[:len(node.Predecessors[0].NodeIp)]
-//			node.Predecessors[1].NodePort = self.Predecessors[0].NodePort[:len(node.Predecessors[0].NodePort)]
-//			self.Predecessors[1].Id = node.Id[:len(node.Id)]
-//			self.Predecessors[1].NodeIp = node.NodeIp[:len(node.NodeIp)]
-//			self.Predecessors[1].NodePort = node.NodePort[:len(node.NodePort)]
-//
-//		} else { // new node connects to a ring of at least three nodes
-//
-//			node.Successor = self.Successor
-//			node.Successor.Predecessor = node
-//			node.Successors[0].Id = self.Successors[0].Id[:len(self.Successors[0].Id)]
-//			node.Successors[0].NodeIp = self.Successors[0].NodeIp[:len(self.Successors[0].NodeIp)]
-//			node.Successors[0].NodePort = self.Successors[0].NodePort[:len(self.Successors[0].NodePort)]
-//			node.Successors[1].Id = self.Successors[1].Id[:len(self.Successors[1].Id)]
-//			node.Successors[1].NodeIp = self.Successors[1].NodeIp[:len(self.Successors[1].NodeIp)]
-//			node.Successors[1].NodePort = self.Successors[1].NodePort[:len(self.Successors[1].NodePort)]
-//			node.Successor.Predecessors[0].Id = node.Id[:len(self.Id)]
-//			node.Successor.Predecessors[0].NodeIp = node.NodeIp[:len(self.NodeIp)]
-//			node.Successor.Predecessors[0].NodePort = node.NodePort[:len(self.NodePort)]
-//			node.Successor.Predecessors[1].Id = self.Id[:len(self.Id)]
-//			node.Successor.Predecessors[1].NodeIp = self.NodeIp[:len(self.NodeIp)]
-//			node.Successor.Predecessors[1].NodePort = self.NodePort[:len(self.NodePort)]
-//			node.Successor.Successor.Predecessors[1].Id = node.Id[:len(self.Id)]
-//			node.Successor.Successor.Predecessors[1].NodeIp = node.NodeIp[:len(self.NodeIp)]
-//			node.Successor.Successor.Predecessors[1].NodePort = node.NodePort[:len(self.NodePort)]
-//
-//			self.Successor = node
-//			node.Predecessor = self
-//			self.Predecessor.Successors[1].Id = node.Id[:len(node.Id)]
-//			self.Predecessor.Successors[1].NodeIp = node.NodeIp[:len(node.NodeIp)]
-//			self.Predecessor.Successors[1].NodePort = node.NodePort[:len(node.NodePort)]
-//			self.Successors[0].Id = node.Id[:len(node.Id)]
-//			self.Successors[0].NodeIp = node.NodeIp[:len(node.NodeIp)]
-//			self.Successors[0].NodePort = node.NodePort[:len(node.NodePort)]
-//			self.Successors[1].Id = node.Successors[0].Id[:len(node.Successors[0].Id)]
-//			self.Successors[1].NodeIp = node.Successors[0].NodeIp[:len(node.Successors[0].NodeIp)]
-//			self.Successors[1].NodePort = node.Successors[0].NodePort[:len(node.Successors[0].NodePort)]
-//			node.Predecessors[0].Id = self.Id[:len(self.Id)]
-//			node.Predecessors[0].NodeIp = self.NodeIp[:len(self.NodeIp)]
-//			node.Predecessors[0].NodePort = self.NodePort[:len(self.NodePort)]
-//			node.Predecessors[1].Id = self.Predecessors[0].Id[:len(node.Predecessors[0].Id)]
-//			node.Predecessors[1].NodeIp = self.Predecessors[0].NodeIp[:len(node.Predecessors[0].NodeIp)]
-//			node.Predecessors[1].NodePort = self.Predecessors[0].NodePort[:len(node.Predecessors[0].NodePort)]
-//		}
-//	}
-//	//self.updateAllFingerTables()
-//}
-
 /* AddToRing
 Available for rpc
 @arg.FirstNode is the node which nodeAdded
@@ -268,11 +82,9 @@ Available for rpc
 func (self *DHTnode) join(joinedNode BasicNode) {
 	if isAlive(joinedNode) {
 		self.initFingerTable(joinedNode)
-		self.printFingers()
 		self.updateOthers()
 	} else {
 		//First node on the ring
-		m := 160
 		for i := 0; i < m; i++ {
 			self.Fingers[i].Node = self.Node
 			self.Fingers[i].Predecessor = self.BasicNode
@@ -298,7 +110,6 @@ func (self *DHTnode) initFingerTable(joinedNode BasicNode) {
 	self.Successor = successor.BasicNode
 
 	//findSuccessor give back Predecessor ?
-	fmt.Println("successor.Pred :" + successor.Predecessor.Id)
 	self.Predecessor = successor.Predecessor
 	self.Fingers[0].Predecessor = self.BasicNode
 	m := 160
@@ -322,25 +133,20 @@ func (self *DHTnode) initFingerTable(joinedNode BasicNode) {
 	self.initFingerSuccessor(joinedNode)
 }
 
-//TODO
 func (self *DHTnode) initFingerSuccessor(joinedNode BasicNode) {
-	m := 160
 	for i := 0; i < m; i++ {
-		//If finger I point to self node, assign self succcessor to finger successor
+		//If finger i point to self node, assign self succcessor to finger successor
 		if self.Fingers[i].Id == self.Id {
 			self.Fingers[i].Successor = self.Successor
 		} else {
 			next, _ := add(self.Fingers[i].Id, 1)
 			successor := joinedNode.findSuccessor(next)
 
-			fmt.Println("successor : ")
-			//TODO BUG successor est tjrs joinedNOde lorsque finger i id est joinedNode
-			successor.print()
 			// if finger i key is after joinedNode or equal
 			if between(joinedNode.IdByte, self.IdByte, self.Fingers[i].keyByte) {
 
 				//If findSuccessor answer node after self, assign self as self.Fingers i+1 successor
-				if between(self.IdByte, joinedNode.IdByte, successor.IdByte) {
+				if between(self.IdByte, joinedNode.IdByte, successor.IdByte) || successor.Id == joinedNode.Id {
 					self.Fingers[i].Successor = self.BasicNode
 				} else {
 					self.Fingers[i].Successor = successor.BasicNode
@@ -350,18 +156,14 @@ func (self *DHTnode) initFingerSuccessor(joinedNode BasicNode) {
 				//if finger i point to joinedNode
 				if self.Fingers[i].Id == joinedNode.Id {
 					// And findSucc is after self
-					if bytes.Compare(successor.IdByte, self.IdByte) == +1 {
+					if between(self.IdByte, joinedNode.IdByte, successor.IdByte) || successor.Id == joinedNode.Id {
 						//Take self as finger i successor
 						self.Fingers[i].Successor = self.BasicNode
 					} else {
-						//Handle case of second node join
-						if successor.Id != joinedNode.Id {
 
-							self.Fingers[i].Successor = successor.BasicNode
-						} else {
-							self.Fingers[i].Successor = self.BasicNode
-						}
+						self.Fingers[i].Successor = successor.BasicNode
 					}
+
 				} else {
 					self.Fingers[i].Successor = successor.BasicNode
 				}
@@ -439,6 +241,36 @@ func (self *DHTnode) UpdateFingerTable(arg *ArgUpdateFingerTable, reply *Node) e
 	return nil
 }
 
+/**
+* self has to be the predecessor of the deadNode
+*
+ */
+func (self *DHTnode) UpdateFingerFromDeadOne(arg *ArgUpdateFingerFromDeadOne, reply *Node) error {
+	//Could be improve in considering predecessor finger which point to the same node
+	for i := 0; i < m; i++ {
+		//is self fingers contains the dead node ?
+		if self.Fingers[i].Id == arg.DeadNode.Id {
+			//easy update of fingers with his successor
+			self.Fingers[i].BasicNode = self.Fingers[i].Successor
+			next := self.Fingers[i].getSuccessor()
+			self.Fingers[i].Successor = next
+			self.Fingers[i].Predecessor = self.Fingers[i].getPredecessor()
+		}
+	}
+	//Update all node counter clockwise
+	p := self.Predecessor
+	//we have to stop when p reach is arg.Node (when p is the deadNode)
+	if p.Id != arg.DeadNode.Id && p.Id != thisNode.Id && p.getPredecessor().Id != p.getSuccessor().Id {
+		p.updateFingerFromDeadOne(arg.DeadNode)
+	} else {
+		//We finished the counter clockwise of nodes
+		//So self.Predecessor is right now the dead node
+		deadNodePred := self.findPredecessor(arg.DeadNode.Id)
+		self.Predecessor = deadNodePred.BasicNode
+	}
+	return nil
+}
+
 //Useless reply
 func (self *DHTnode) UpdateFingerTableFirstNode(arg *ArgUpdateFingerTable, reply *Node) error {
 	self.Successor = arg.Node.BasicNode
@@ -483,8 +315,6 @@ func (self *DHTnode) FindPredecessor(arg *ArgLookup, reply *Node) error {
 func (self *DHTnode) ClosestPrecedingFinger(arg *ArgLookup, reply *Node) error {
 	idByte := arg.KeyByte
 	//fmt.Println("arg.Key :" + arg.Key)
-	printIdByte(arg.KeyByte)
-	m := 160
 	for i := m - 1; i > -1; i-- {
 		if inside(self.IdByte, idByte, self.Fingers[i].IdByte) {
 			*reply = self.Fingers[i].Node
@@ -503,15 +333,8 @@ func (self *DHTnode) ClosestPrecedingFinger(arg *ArgLookup, reply *Node) error {
 
 func (self *DHTnode) FindSuccessor(arg *ArgLookup, reply *Node) error {
 	predecessor := self.findPredecessor(arg.Key)
-	fmt.Println("\n**asked :" + arg.Key)
-	new := predecessor.BasicNode
-	new.print()
 	reply.Predecessor = predecessor.BasicNode
-	//fmt.Println("reply :" + reply.Id + "reply pred " + reply.Predecessor.Id)
-	//TODO BUG les fingers ne comportent pas leur Successor !
 	reply.BasicNode = predecessor.Successor
-	fmt.Println("\nreply :")
-	reply.print()
 	if reply.Id == "" {
 		log.Fatal("FindSuccessor error : reply is empty")
 	}
@@ -528,250 +351,44 @@ func (self *DHTnode) isMyFinger(node Finger) bool {
 	return false
 }
 
-//func (self *DHTnode) getPredecessor() BasicNode {
-//	for i:= m-1; i > -1; i-- {
-//		if self.Fingers[i].Id != self.Id {
-//			if self.Fingers[i].Node.findSuccessor(self.Fingers[i].Id)
-//
-
-
-
-
-
-type ArgStorage struct {
-	Key string
-	Data string
-	StorageSpace string
+/**
+* Use this function when a node has been notice as dead
+* deadNode has to be the successor of self
+*
+**/
+func (self *DHTnode) reconnectRing(deadNode DHTnode) {
+	self.Successor = self.Fingers[0].Successor
+	self.updateFingerFromDeadOne(deadNode.BasicNode)
 }
 
-// stores data at current node, can be called from another node
-func (n *BasicNode) StoreData(arg *ArgStorage, dataStored *bool) error {
-
-	key := arg.Key
-	data := arg.Data
-	storageSpace := arg.StorageSpace
-	appendDataToStorage(key, data, storageSpace)
-	*dataStored = true
+func (self *DHTnode) GetPredecessor(arg *ArgEmpty, reply *BasicNode) error {
+	*reply = self.Predecessor
 	return nil
 }
 
-// used by StoreData()
-func appendDataToStorage(key string, data string, storageSpace string) {
-
-	_ = os.Chdir("..")
-	_ = os.Chdir("..")
-	_ = os.Chdir("storage")
-
-	filename := ""
-	if storageSpace == "node" {
-		filename = "nodeData.txt"
-	} else if storageSpace == "succ" {
-		filename = "succData.txt"
-	} else {
-		filename = "predData.txt"
-	}
-
-	storageFile, err := os.OpenFile(filename, os.O_APPEND, 0666) 
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer storageFile.Close()
-
-	storageFileInfo, _ := storageFile.Stat()
-	lastchar := storageFileInfo.Size()
-
-	line := key + "," + data + "\r\n"
-	numbytes, _ := storageFile.WriteAt([]byte(line), int64(lastchar))
-	storageFile.Close()
-	fmt.Printf("%d bytes written to contents file\n", numbytes)	
-
-	_ = os.Chdir("..")
-	_ = os.Chdir("new_git")	
-	_ = os.Chdir("src")	
-}
-
-
-type ArgDeletion struct {
-	StorageSpace string
-	Key string
-}
-
-// deletes key-data pair, can be called from another node
-func (n *DHTnode) DeleteData (arg *ArgDeletion, dataDeleted *bool) error {
-
-	_ = os.Chdir("..")
-	_ = os.Chdir("..")
-	_ = os.Chdir("storage")
-
-	storageSpace := arg.StorageSpace
-	key := arg.Key
-
-	currentFileName := ""
-	oldFileName := ""
-	if storageSpace == "node" {
-		currentFileName = "nodeData.txt"
-		oldFileName = "oldNodeData.txt"
-	} else if storageSpace == "succ" {
-		currentFileName = "succData.txt"
-		oldFileName = "oldSuccData.txt"
-	} else {
-		currentFileName = "predData.txt"
-		oldFileName = "oldPredData.txt"
-	}
-
-	err := os.Rename(currentFileName,oldFileName)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-
-	oldStorageFile, err := os.Open(oldFileName)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer oldStorageFile.Close()
-	reader := bufio.NewReader(oldStorageFile)
-
-	newStorageFile, err := os.Create(currentFileName)
-	if err != nil {
-		log.Fatal(err)
-	}
- 	defer newStorageFile.Close()
-
-
- 	oldStorageEOF := false
- 	for !oldStorageEOF {
-		line, err := reader.ReadBytes('\n')
-		if err != nil {
- 			if err == io.EOF {
- 				oldStorageEOF = true
- 			} else {
-				log.Fatal(err)
-			}
-		}
-
-		stringLine := string(line[:])
-
-		if !strings.Contains(stringLine, key) {
-			newStorageFileInfo, err := newStorageFile.Stat()
- 			if err != nil {
-				log.Fatal(err)
-			}
-	 		newStorageFileSize := newStorageFileInfo.Size()
-			numbytes, err := newStorageFile.WriteAt([]byte(line), int64(newStorageFileSize))
-			if err != nil {
-				log.Fatal(err)
-			}
-			fmt.Printf("%d bytes written\n", numbytes)
-		}
-	}
-	oldStorageFile.Close()
-	newStorageFile.Close()
-
-	err = os.Remove(oldFileName)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	_ = os.Chdir("..")
-	_ = os.Chdir("new_git")	
-	_ = os.Chdir("src")	
-
-	*dataDeleted = true
-	return nil
-
-
-}
-
-
-type ArgStatus struct {}
-
-// responds to status checks
-func (n *DHTnode) NodeStatus(arg *ArgStatus, statusReply *bool) error {
-    
-    *statusReply = true
-
-    return nil
-}
-
-
-type ArgListing struct {
-	storageSpace string
-}
-
-// prints all key/data-pairs in one of the storage spaces of the node
-func (n *DHTnode) ListStoredData (arg *ArgListing, dataListed *bool) error {
-//func (n *DHTnode) ListStoredData(storageSpace string) {
-
-	_ = os.Chdir("..")
-	_ = os.Chdir("..")
-	_ = os.Chdir("storage")
-
-	filename := ""
-	if arg.storageSpace == "node" {
-		filename = "nodeData.txt"
-	} else if arg.storageSpace == "succ" {
-		filename = "succData.txt"
-	} else {
-		filename = "predData.txt"
-	}
-
-	storageFile, err := os.Open(filename)
-	if err != nil {
-		fmt.Printf("failed to open nodeData.txt")
-		log.Fatal(err)
-	}
-	defer storageFile.Close()
-
-	reader := bufio.NewReader(storageFile)
-	storageEOF := false
-	fmt.Printf("\n\nFiles stored in %s space:\n", arg.storageSpace)
-	for (!storageEOF) {
-		key_delim, err := reader.ReadBytes(',')
-		if err != nil {
-			if err != io.EOF {
-				log.Fatal(err)
-			}
-		}
-		key := bytes.TrimSuffix(key_delim, []byte(","))
-		data, err := reader.ReadBytes('\n')
-		if err != nil {
-			if err != io.EOF {
-				log.Fatal(err)
-			}
-		}
-		if (len(data)) == 0 {
-			storageEOF = true
-		} else {
-			fmt.Printf("key:%s\n", key)
-			fmt.Printf("data:%s\n", data)
-		}
-	}
-	storageFile.Close()
-
-	_ = os.Chdir("..")
-	_ = os.Chdir("new_git")	
-	_ = os.Chdir("src")	
-
-	*dataListed = true;
+func (self *DHTnode) GetSuccessor(arg *ArgEmpty, reply *BasicNode) error {
+	*reply = self.Successor
 	return nil
 }
 
-// inits a folder (ip for unique name when on same computer) and files for storing keys-data pair if they dont exist
-func (n *DHTnode) StorageInit() {
+//Check if i finger of self is alive or not
+func (self *DHTnode) isFingerAlive(i int) bool {
+	return isAlive(self.Fingers[i].BasicNode)
+}
 
-	_ = os.Chdir("..")
-	_ = os.Chdir("..")
-	
-	folderName := "storage" + n.Ip
-	CreateDir(folderName)
-	_ = os.Chdir(folderName)
+/*
+Check all fingers of self with interval between each finger
+ param : time in Millisecond  between fingers check
+ IMPORTANT : has to be launch has***** thread *****
+*/
+func (self *DHTnode) checkFingers(interval time.Duration) {
+	for {
+		for i := 0; i < m; i++ {
+			if !self.isFingerAlive(i) {
+				handleDeadNode(self.Fingers[i].BasicNode)
+			}
 
-	CreateFile("succData.txt")
-	CreateFile("nodeData.txt")
-	CreateFile("predData.txt")
-
-	_ = os.Chdir("..")
-	_ = os.Chdir("new_git")	
-	_ = os.Chdir("src")	
+			time.Sleep(interval * time.Millisecond)
+		}
+	}
 }

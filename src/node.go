@@ -209,11 +209,8 @@ Available for rpc
 //Work in progress
 func (self *DHTnode) join(joinedNode BasicNode) {
 	if isAlive(joinedNode) {
-		fmt.Println("Debut join")
 		self.initFingerTable(joinedNode)
-		fmt.Println("initFinger")
 		self.updateOthers()
-		fmt.Println("updateOther!")
 	} else {
 		//First node on the ring
 		for i := 0; i < m; i++ {

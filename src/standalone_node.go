@@ -75,11 +75,9 @@ func main() {
 		}
 		thisNode.Ip = scanner.Text()
 		if thisNode.Ip == "" {
-			fmt.Println("nodeIp is empty")
 			fmt.Println("Creating a localhost node")
 			thisNode.Ip = "localhost"
 			firstNodeIp = "localhost"
-			fmt.Printf("ip=%s", thisNode.Ip)
 			fmt.Printf("Port for this node in localhost : ")
 			for scanner.Scan() {
 				{
@@ -108,15 +106,10 @@ func main() {
 		thisNode.Ip = firstNodeIp
 	}
 
-	fmt.Println("Fin all scan")
-	fmt.Printf("\n IP:%s  port:%s", thisNode.Ip, nodePort)
 	firstNode := createFirstNode(firstNodeIp, "5555")
-	fmt.Println("firstNode creation")
 	*thisNode = makeDHTNode(thisNode.Ip, nodePort)
-	fmt.Println("makeDht")
 
 	thisNode.join(firstNode)
-	fmt.Println("Join")
 
 	//Enable listening for rpc
 	thisNode.listenHTTP(nodePort)

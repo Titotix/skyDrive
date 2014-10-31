@@ -23,29 +23,10 @@ var defaultPort string
 
 func main() {
 
-	//fmt.Println("addr : " + net.InterfaceAddrs[0].String())
-	//fmt.Println("addr : " + net.InterfaceAddrs.String())
-	//fmt.Println("addr : " + net.InterfaceAddrs[1].String())
 	thisNode = new(DHTnode)
-	//thisNode.StorageInit()
-
-	/*
-		//dataStored := false;
-		//argStore := &ArgStorage{sha1hash("testkey"), "testdata", "node"}
-		//err := thisNode.StoreData(argStore, &dataStored)
-
-		// Testing to list data stored on local node
-		dataListed := false;
-		argList := &ArgListing{"node"}
-		err = thisNode.ListStoredData(argList, &dataListed)
-		if err != nil {
-			log.Fatal(err)
-		}
-	*/
 
 	defaultPort = "9999"
 	var nodePort string
-	//var nodeIp *string
 	var firstNodeIp string = "172.30.0.154"
 	fmt.Printf("\nNew node is starting...\n")
 
@@ -120,16 +101,35 @@ func main() {
 
 	//httpServer()
 	for {
+		fmt.Printf("\n *** What do you want to do ? ***\n\n")
+		fmt.Println("1) Print fingers table of current node ?")
+		fmt.Println("2) Look for a responsible node of a key ?")
 		for scanner.Scan() {
 			{
 				break
 			}
 		}
 		input := scanner.Text()
-		if input == "y" {
+		switch input {
+		case "1":
 			thisNode.printFingers()
 			fmt.Println("** MOI :")
 			thisNode.print()
+		case "2":
+			fmt.Println("Which key do you look for ?")
+			for scanner.Scan() {
+				{
+					break
+				}
+			}
+			key := scanner.Text()
+			result := thisNode.findSuccessor(key)
+			fmt.Printf("The responsible node for \"%s\" is \"%s\"\n", key, result.Id)
+
+		default:
+			fmt.Println("Unsupported input")
+		}
+		if input == "y" {
 		}
 		time.Sleep(100 * time.Millisecond)
 	}

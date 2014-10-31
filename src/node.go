@@ -315,7 +315,6 @@ func (self *DHTnode) FindPredecessor(arg *ArgLookup, reply *Node) error {
 func (self *DHTnode) ClosestPrecedingFinger(arg *ArgLookup, reply *Node) error {
 	idByte := arg.KeyByte
 	//fmt.Println("arg.Key :" + arg.Key)
-	printIdByte(arg.KeyByte)
 	for i := m - 1; i > -1; i-- {
 		if inside(self.IdByte, idByte, self.Fingers[i].IdByte) {
 			*reply = self.Fingers[i].Node

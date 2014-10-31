@@ -1,26 +1,19 @@
 package main
 
-import ()
+import (
+	"fmt"
+)
 
-func (thisNode *Node) removeData (storageSpace string, unhashedKey ) {
-
-	hashedKey := sha1hash(unhashedKey)
-	arg := &ArgLookup{hashedKey}
-	reply := nil
-	err := thisNode.findSuccessor(arg, &reply)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	nodeToRemoveAt := reply.BasicNode
-
-	err := nodeToRemoveAt.deleteDataRemote(storageSpace, hashedKey)
-	if err != nil {
-		log.Fatal(err)
+//ASK what is unhashKey ??
+func (self *Node) removeData(storageSpace string, key string) {
+	reply := self.findSuccessor(key)
+	success := reply.deleteDataRemote(storageSpace, key)
+	if success != false {
+		fmt.Println("FAIL deleteData")
 	}
 }
 
-func (thisNode *Node) uploadData (unhashedKey string, data string) {
+func (thisNode *Node) uploadData(unhashedKey string, data string) {
 
 	hashedKey := sha1hash(unhashedKey)
 	arg := &ArgLookup{hashedKey}
@@ -45,7 +38,7 @@ func (n *BasicNode) StoreData(arg *ArgStorage, dataStored *bool) error {
 	data := arg.Data
 	storageSpace := arg.StorageSpace
 	appendDataToStorage(key, data, storageSpace)
-	if storageSpace == "node" {		
+	if storageSpace == "node" {
 		replicateData("node", n.predeccessor, "node")
 		replicateData("node", n.successor, "node")
 	}
@@ -70,7 +63,7 @@ func appendDataToStorage(key string, data string, storageSpace string) {
 		filename = "predData.txt"
 	}
 
-	storageFile, err := os.OpenFile(filename, os.O_APPEND, 0666) 
+	storageFile, err := os.OpenFile(filename, os.O_APPEND, 0666)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -82,17 +75,15 @@ func appendDataToStorage(key string, data string, storageSpace string) {
 	line := key + "," + data + "\r\n"
 	numbytes, _ := storageFile.WriteAt([]byte(line), int64(lastchar))
 	storageFile.Close()
-	fmt.Printf("%d bytes written to contents file\n", numbytes)	
+	fmt.Printf("%d bytes written to contents file\n", numbytes)
 
 	_ = os.Chdir("..")
-	_ = os.Chdir("new_git")	
-	_ = os.Chdir("src")	
+	_ = os.Chdir("new_git")
+	_ = os.Chdir("src")
 }
 
-
-
 // deletes key-data pair, can be called from another node
-func (n *DHTnode) DeleteData (arg *ArgDeletion, dataDeleted bool) error {
+func (n *DHTnode) DeleteData(arg *ArgDeletion, dataDeleted bool) error {
 
 	_ = os.Chdir("..")
 	_ = os.Chdir("..")
@@ -114,11 +105,10 @@ func (n *DHTnode) DeleteData (arg *ArgDeletion, dataDeleted bool) error {
 		oldFileName = "oldPredData.txt"
 	}
 
-	err := os.Rename(currentFileName,oldFileName)
+	err := os.Rename(currentFileName, oldFileName)
 	if err != nil {
 		log.Fatal(err)
 	}
-
 
 	oldStorageFile, err := os.Open(oldFileName)
 	if err != nil {
@@ -131,16 +121,15 @@ func (n *DHTnode) DeleteData (arg *ArgDeletion, dataDeleted bool) error {
 	if err != nil {
 		log.Fatal(err)
 	}
- 	defer newStorageFile.Close()
+	defer newStorageFile.Close()
 
-
- 	oldStorageEOF := false
- 	for !oldStorageEOF {
+	oldStorageEOF := false
+	for !oldStorageEOF {
 		line, err := reader.ReadBytes('\n')
 		if err != nil {
- 			if err == io.EOF {
- 				oldStorageEOF = true
- 			} else {
+			if err == io.EOF {
+				oldStorageEOF = true
+			} else {
 				log.Fatal(err)
 			}
 		}
@@ -149,10 +138,10 @@ func (n *DHTnode) DeleteData (arg *ArgDeletion, dataDeleted bool) error {
 
 		if !strings.Contains(stringLine, key) {
 			newStorageFileInfo, err := newStorageFile.Stat()
- 			if err != nil {
+			if err != nil {
 				log.Fatal(err)
 			}
-	 		newStorageFileSize := newStorageFileInfo.Size()
+			newStorageFileSize := newStorageFileInfo.Size()
 			numbytes, err := newStorageFile.WriteAt([]byte(line), int64(newStorageFileSize))
 			if err != nil {
 				log.Fatal(err)
@@ -169,16 +158,16 @@ func (n *DHTnode) DeleteData (arg *ArgDeletion, dataDeleted bool) error {
 	}
 
 	_ = os.Chdir("..")
-	_ = os.Chdir("new_git")	
-	_ = os.Chdir("src")	
+	_ = os.Chdir("new_git")
+	_ = os.Chdir("src")
 
 	dataDeleted = true
 	return nil
 }
 
 // prints all key/data-pairs in one of the storage spaces of the node
-func (n *DHTnode) ListStoredData (arg *ArgListing, dataListed *bool) error {
-//func (n *DHTnode) ListStoredData(storageSpace string) {
+func (n *DHTnode) ListStoredData(arg *ArgListing, dataListed *bool) error {
+	//func (n *DHTnode) ListStoredData(storageSpace string) {
 
 	_ = os.Chdir("..")
 	_ = os.Chdir("..")
@@ -203,7 +192,7 @@ func (n *DHTnode) ListStoredData (arg *ArgListing, dataListed *bool) error {
 	reader := bufio.NewReader(storageFile)
 	storageEOF := false
 	fmt.Printf("\n\nFiles stored in %s space:\n", arg.storageSpace)
-	for (!storageEOF) {
+	for !storageEOF {
 		key_delim, err := reader.ReadBytes(',')
 		if err != nil {
 			if err != io.EOF {
@@ -227,10 +216,10 @@ func (n *DHTnode) ListStoredData (arg *ArgListing, dataListed *bool) error {
 	storageFile.Close()
 
 	_ = os.Chdir("..")
-	_ = os.Chdir("new_git")	
-	_ = os.Chdir("src")	
+	_ = os.Chdir("new_git")
+	_ = os.Chdir("src")
 
-	*dataListed = true;
+	*dataListed = true
 	return nil
 }
 
@@ -239,7 +228,7 @@ func (n *DHTnode) StorageInit() {
 
 	_ = os.Chdir("..")
 	_ = os.Chdir("..")
-	
+
 	folderName := "storage" + n.Ip
 	CreateDir(folderName)
 	_ = os.Chdir(folderName)
@@ -249,8 +238,8 @@ func (n *DHTnode) StorageInit() {
 	CreateFile("predData.txt")
 
 	_ = os.Chdir("..")
-	_ = os.Chdir("new_git")	
-	_ = os.Chdir("src")	
+	_ = os.Chdir("new_git")
+	_ = os.Chdir("src")
 }
 
 // replicates or restores replicated data
@@ -344,7 +333,7 @@ func moveData() {
 	newStorageFile.Close()
 }
 
-func (thisNode *Node) retrieveData (unhashedKey) {
+func (thisNode *Node) retrieveData(unhashedKey) {
 
 	hashedKey := sha1hash(unhashedKey)
 	arg := &ArgLookup{hashedKey}
@@ -361,9 +350,6 @@ func (thisNode *Node) retrieveData (unhashedKey) {
 		log.Fatal(err)
 	}
 }
-
-
-
 
 type ArgGetting struct {
 	Key string
@@ -387,7 +373,7 @@ func (n *BasicNode) GetData(arg *ArgGetting, dataFound *string) error {
 	reader := bufio.NewReader(storageFile)
 	searchDone := false
 	fmt.Printf("\n\nFiles stored in %s space:\n", arg.storageSpace)
-	for (!searchDone) {
+	for !searchDone {
 		storedKeyDelim, err := reader.ReadBytes(',')
 		if err != nil {
 			if err != io.EOF {
@@ -414,18 +400,15 @@ func (n *BasicNode) GetData(arg *ArgGetting, dataFound *string) error {
 	storageFile.Close()
 
 	_ = os.Chdir("..")
-	_ = os.Chdir("new_git")	
-	_ = os.Chdir("src")	
+	_ = os.Chdir("new_git")
+	_ = os.Chdir("src")
 
 	return nil
 }
 
-
-
-
 type ArgStorage struct {
-	Key string
-	Data string
+	Key          string
+	Data         string
 	StorageSpace string
 }
 
@@ -436,7 +419,7 @@ func (n *BasicNode) StoreData(arg *ArgStorage, dataStored *bool) error {
 	data := arg.Data
 	storageSpace := arg.StorageSpace
 	appendDataToStorage(key, data, storageSpace)
-	if storageSpace == "node" {		
+	if storageSpace == "node" {
 		replicateData("node", n.predeccessor, "node")
 		replicateData("node", n.successor, "node")
 	}
@@ -444,4 +427,3 @@ func (n *BasicNode) StoreData(arg *ArgStorage, dataStored *bool) error {
 	*dataStored = true
 	return nil
 }
-

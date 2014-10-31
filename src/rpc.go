@@ -60,25 +60,24 @@ type ArgDeleteData struct {
 
 type ArgGetData struct {
 	Key string
-} 
-
+}
 
 /*
 Abstract RPC for GetData method
 @arg : ArgDeleteData{ storageSpace, key}
 */
-func (self *DHTnode) callGetData(clientSocket *rpc.Client, arg *ArgGetData) *DHTnode {
-	var reply bool
+func (self *DHTnode) callGetData(clientSocket *rpc.Client, arg *ArgGetData) string {
+	var reply string
 	err := clientSocket.Call("DHTnode.GetData", arg, &reply)
 	if err != nil {
 		log.Fatal("remote GetData error on :", self.Ip, ":", self.Port, " ", err)
 	}
-	return &reply
+	return reply
 }
 
 //Abstract callGetData method
 // nodeTarget is the node where rpc is computed
-func (nodeTarget *DHTnode) getDataRemote(key string) *DHTnode {
+func (nodeTarget *DHTnode) getDataRemote(key string) string {
 
 	clientSocket := connect(nodeTarget.Ip, nodeTarget.Port)
 	arg := ArgGetData{key}
@@ -87,13 +86,11 @@ func (nodeTarget *DHTnode) getDataRemote(key string) *DHTnode {
 	return reply
 }
 
-
-
 /*
 Abstract RPC for DeleteData method
 @arg : ArgDeleteData{ storageSpace, key}
 */
-func (self *DHTnode) callDeleteData(clientSocket *rpc.Client, arg *ArgDeleteData) bool {
+func (self *Node) callDeleteData(clientSocket *rpc.Client, arg *ArgDeleteData) bool {
 	var reply bool
 	err := clientSocket.Call("DHTnode.DeleteData", arg, &reply)
 	if err != nil {
@@ -104,7 +101,7 @@ func (self *DHTnode) callDeleteData(clientSocket *rpc.Client, arg *ArgDeleteData
 
 //Abstract callDeleteData method
 // nodeTarget is the node where rpc is computed
-func (nodeTarget *DHTnode) deleteDataRemote(storageSpace string, key string) bool {
+func (nodeTarget *Node) deleteDataRemote(storageSpace string, key string) bool {
 
 	clientSocket := connect(nodeTarget.Ip, nodeTarget.Port)
 	arg := ArgDeleteData{storageSpace, key}

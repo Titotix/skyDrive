@@ -18,8 +18,6 @@ func (thisNode *Node) removeData (storageSpace string, unhashedKey ) {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-
 }
 
 func (thisNode *Node) uploadData (unhashedKey string, data string) {
@@ -39,9 +37,6 @@ func (thisNode *Node) uploadData (unhashedKey string, data string) {
 		log.Fatal(err)
 	}
 }
-
-
-
 
 // stores data at current node, can be called from another node
 func (n *BasicNode) StoreData(arg *ArgStorage, dataStored *bool) error {
@@ -348,3 +343,105 @@ func moveData() {
 	oldStorageFile.Close()
 	newStorageFile.Close()
 }
+
+func (thisNode *Node) retrieveData (unhashedKey) {
+
+	hashedKey := sha1hash(unhashedKey)
+	arg := &ArgLookup{hashedKey}
+	reply := nil
+	err := thisNode.findSuccessor(arg, &reply)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	storedAtNode := reply.BasicNode
+
+	err := storedAtNode.getDataRemote(hashedKey)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+
+
+
+type ArgGetting struct {
+	Key string
+}
+
+func (n *BasicNode) GetData(arg *ArgGetting, dataFound *string) error {
+
+	key := arg.Key
+
+	_ = os.Chdir("..")
+	_ = os.Chdir("..")
+	_ = os.Chdir("storage")
+
+	storageFile, err := os.Open("nodeData.txt")
+	if err != nil {
+		fmt.Printf("failed to open nodeData.txt")
+		log.Fatal(err)
+	}
+	defer storageFile.Close()
+
+	reader := bufio.NewReader(storageFile)
+	searchDone := false
+	fmt.Printf("\n\nFiles stored in %s space:\n", arg.storageSpace)
+	for (!searchDone) {
+		storedKeyDelim, err := reader.ReadBytes(',')
+		if err != nil {
+			if err != io.EOF {
+				log.Fatal(err)
+			}
+		}
+		storedKey := bytes.TrimSuffix(storedKeyDelim, []byte(","))
+		data, err := reader.ReadBytes('\n')
+		if err != nil {
+			if err != io.EOF {
+				log.Fatal(err)
+			}
+		}
+		if (len(data)) == 0 {
+			*dataFound = "no data was found"
+			searchDone = true
+		} else {
+			if storedKey == key {
+				*dataFound = data
+				searchDone = true
+			}
+		}
+	}
+	storageFile.Close()
+
+	_ = os.Chdir("..")
+	_ = os.Chdir("new_git")	
+	_ = os.Chdir("src")	
+
+	return nil
+}
+
+
+
+
+type ArgStorage struct {
+	Key string
+	Data string
+	StorageSpace string
+}
+
+// stores data at current node, can be called from another node
+func (n *BasicNode) StoreData(arg *ArgStorage, dataStored *bool) error {
+
+	key := arg.Key
+	data := arg.Data
+	storageSpace := arg.StorageSpace
+	appendDataToStorage(key, data, storageSpace)
+	if storageSpace == "node" {		
+		replicateData("node", n.predeccessor, "node")
+		replicateData("node", n.successor, "node")
+	}
+
+	*dataStored = true
+	return nil
+}
+

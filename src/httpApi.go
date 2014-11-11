@@ -35,8 +35,8 @@ func httpServer() {
 
 }
 
-func profile(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	name := params["name"]
-	w.Write([]byte("Hello " + name))
-}
+//func profile(w http.ResponseWriter, r *http.Request) {
+//	params := mux.Vars(r)
+//	name := params["name"]
+//	w.Write([]byte("Hello " + name))
+//}

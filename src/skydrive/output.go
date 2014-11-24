@@ -76,11 +76,6 @@ func (self *Finger) print() {
 	self.Node.print()
 }
 
-func (self *ComparableNode) print() {
-	fmt.Println("Id :" + self.Id)
-	fmt.Printf("\n")
-}
-
 func (self *DHTnode) printFingers() {
 	m := 160
 	for i := 0; i < m; i++ {

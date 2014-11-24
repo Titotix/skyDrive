@@ -6,14 +6,10 @@ import (
 	"time"
 )
 
-type ComparableNode struct {
-	Id   string
-	Ip   string
-	Port string
-}
-
 type BasicNode struct {
-	ComparableNode
+	Id     string
+	Ip     string
+	Port   string
 	IdByte []byte
 }
 
@@ -59,7 +55,7 @@ func makeDHTNode(NodeIp string, NodePort string) DHTnode {
 	IdStr := sha1hash(NodeIp + NodePort)
 	IdByte, _ := hex.DecodeString(IdStr)
 
-	basicNode := BasicNode{ComparableNode{IdStr, NodeIp, NodePort}, IdByte}
+	basicNode := BasicNode{IdStr, NodeIp, NodePort, IdByte}
 	simpleNode := Node{basicNode, *new(BasicNode), *new(BasicNode)}
 	node := DHTnode{simpleNode, "", "", nil}
 
@@ -223,7 +219,7 @@ func (self *DHTnode) UpdateFingerTable(arg *ArgUpdateFingerTable, reply *Node) e
 
 			//get first node preceding n
 			p := self.Predecessor
-			if self.ComparableNode == self.Predecessor.ComparableNode {
+			if self.Id == self.Predecessor.Id {
 				self.Predecessor = arg.Node.BasicNode
 				self.Successor = arg.Node.BasicNode
 				p = self.Predecessor
@@ -344,7 +340,7 @@ func (self *DHTnode) FindSuccessor(arg *ArgLookup, reply *Node) error {
 func (self *DHTnode) isMyFinger(node Finger) bool {
 	m := 160
 	for i := 0; i < m; i++ {
-		if self.Fingers[i].ComparableNode == node.ComparableNode {
+		if self.Fingers[i].Id == node.Id {
 			return true
 		}
 	}

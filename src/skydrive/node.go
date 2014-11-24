@@ -6,25 +6,6 @@ import (
 	"time"
 )
 
-type BasicNode struct {
-	Id     string
-	Ip     string
-	Port   string
-	IdByte []byte
-}
-
-//I can delete pointer on succ et pred
-type Node struct {
-	BasicNode
-	Successor   BasicNode
-	Predecessor BasicNode
-}
-
-type DHTnode struct {
-	Node
-	Fingers []*Finger
-}
-
 func createFirstNode(host string, port string) BasicNode {
 	var firstNode BasicNode
 	firstNode.Port = port

@@ -24,3 +24,27 @@ type Finger struct {
 	key     string
 	keyByte []byte
 }
+
+type ArgLookup struct {
+	Key     string
+	KeyByte []byte
+}
+
+type ArgAddToRing struct {
+	FirstNode DHTnode
+}
+
+type ArgUpdateFingerTable struct {
+	Node Node
+	I    int
+}
+
+type ArgFirstUpdate struct {
+	secondNode Node
+}
+
+type ArgUpdateFingerFromDeadOne struct {
+	DeadNode BasicNode
+}
+
+type ArgEmpty struct{}

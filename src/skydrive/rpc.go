@@ -7,60 +7,6 @@ import (
 	"net/rpc"
 )
 
-type ArgLookup struct {
-	Key     string
-	KeyByte []byte
-}
-
-type ArgAddToRing struct {
-	FirstNode DHTnode
-}
-
-type ArgUpdateFingerTable struct {
-	Node Node
-	I    int
-}
-
-type ArgFirstUpdate struct {
-	secondNode Node
-}
-
-type ArgStorage struct {
-	Key          string
-	Data         string
-	StorageSpace string
-}
-
-type ArgDeletion struct {
-	StorageSpace string
-	Key          string
-}
-
-type ArgListing struct {
-	storageSpace string
-}
-
-type ArgEmpty struct{}
-
-type ArgUpdateFingerFromDeadOne struct {
-	DeadNode BasicNode
-}
-
-type ArgStoreData struct {
-	Key          string
-	Data         string
-	StorageSpace string
-}
-
-type ArgDeleteData struct {
-	StorageSpace string
-	Key          string
-}
-
-type ArgGetData struct {
-	Key string
-}
-
 // Current node is going to connect to remote http server (@host, @port)
 func connect(host string, port string) *rpc.Client {
 	client, err := rpc.DialHTTP("tcp", host+":"+port)
@@ -84,33 +30,6 @@ func isAlive(node BasicNode) bool {
 	client.Close()
 	return true
 }
-
-/*
-Abstract RPC for Lookup method
-@arg : ArgLookup{nodeTarget.Successor, keyTarget}
-With nodeTarget.Successor is the node which are going to respond to this rpc
-keyTarget is the key which we are looking for
-*/
-//func (self *DHTnode) callLookup(clientSocket *rpc.Client, arg *ArgLookup) *DHTnode {
-//	var reply DHTnode
-//	err := clientSocket.Call("DHTnode.FingerLookup", arg, &reply)
-//	if err != nil {
-//		log.Fatal("remote lookup error on :", self.Ip, ":", self.Port, " ", err)
-//	}
-//	fmt.Printf("reply : %s", reply.Id)
-//	return &reply
-//}
-//
-////Abstract callLookup method
-//// nodeTarget is the node where rpc is computed
-//func (nodeTarget *DHTnode) lookup(keyTarget string, keyByte []byte) *DHTnode {
-//
-//	clientSocket := connect(nodeTarget.Ip, nodeTarget.Port)
-//	arg := ArgLookup{keyTarget, keyByte}
-//	reply := nodeTarget.callLookup(clientSocket, &arg)
-//	clientSocket.Close()
-//	return reply
-//}
 
 func callUpdateFingerTable(clientSocket *rpc.Client, nodeTarget BasicNode, arg *ArgUpdateFingerTable) {
 	var reply Node
@@ -447,6 +366,38 @@ func handleDeadNode(deadNode BasicNode) bool {
 
 //Code used in data management. Code which exist but dont compiled.
 ///*
+//type ArgStorage struct {
+//	Key          string
+//	Data         string
+//	StorageSpace string
+//}
+//
+//type ArgDeletion struct {
+//	StorageSpace string
+//	Key          string
+//}
+//
+//type ArgListing struct {
+//	storageSpace string
+//}
+//
+//type ArgEmpty struct{}
+//
+//
+//type ArgStoreData struct {
+//	Key          string
+//	Data         string
+//	StorageSpace string
+//}
+//
+//type ArgDeleteData struct {
+//	StorageSpace string
+//	Key          string
+//}
+//
+//type ArgGetData struct {
+//	Key string
+//}
 //
 //
 //Abstract RPC for GetData method

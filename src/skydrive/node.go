@@ -22,9 +22,7 @@ type Node struct {
 
 type DHTnode struct {
 	Node
-	storagePath    string
-	storageContent string
-	Fingers        []*Finger
+	Fingers []*Finger
 }
 
 func createFirstNode(host string, port string) BasicNode {
@@ -57,7 +55,7 @@ func makeDHTNode(NodeIp string, NodePort string) DHTnode {
 
 	basicNode := BasicNode{IdStr, NodeIp, NodePort, IdByte}
 	simpleNode := Node{basicNode, *new(BasicNode), *new(BasicNode)}
-	node := DHTnode{simpleNode, "", "", nil}
+	node := DHTnode{simpleNode, nil}
 
 	m := 160
 	for i := 0; i < m; i++ {

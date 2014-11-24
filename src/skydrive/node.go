@@ -40,9 +40,11 @@ func makeDHTNode(NodeIp string, NodePort string) DHTnode {
 
 	m := 160
 	for i := 0; i < m; i++ {
+		//We define the i th finger
 		fingerNumber := i + 1
 		newFingerKey, newFingerKeyByte := calcFinger(node.IdByte, fingerNumber, 160)
-		newFinger := &Finger{*new(Node), newFingerKey, newFingerKeyByte}
+
+		newFinger := &Finger{*new(Node), i, newFingerKey, newFingerKeyByte}
 		node.Fingers = append(node.Fingers, newFinger)
 	}
 

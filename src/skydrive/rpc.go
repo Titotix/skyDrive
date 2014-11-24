@@ -40,7 +40,6 @@ type ArgListing struct {
 	storageSpace string
 }
 
-type ArgStatus struct{}
 type ArgEmpty struct{}
 
 type ArgUpdateFingerFromDeadOne struct {
@@ -84,78 +83,6 @@ func isAlive(node BasicNode) bool {
 	}
 	client.Close()
 	return true
-}
-
-/*
-Abstract RPC for GetData method
-@arg : ArgDeleteData{ storageSpace, key}
-*/
-func (self *DHTnode) callGetData(clientSocket *rpc.Client, arg *ArgGetData) string {
-	var reply string
-	err := clientSocket.Call("DHTnode.GetData", arg, &reply)
-	if err != nil {
-		log.Fatal("remote GetData error on :", self.Ip, ":", self.Port, " ", err)
-	}
-	return reply
-}
-
-//Abstract callGetData method
-// nodeTarget is the node where rpc is computed
-func (nodeTarget *DHTnode) getDataRemote(key string) string {
-
-	clientSocket := connect(nodeTarget.Ip, nodeTarget.Port)
-	arg := ArgGetData{key}
-	reply := nodeTarget.callGetData(clientSocket, &arg)
-	clientSocket.Close()
-	return reply
-}
-
-/*
-Abstract RPC for DeleteData method
-@arg : ArgDeleteData{ storageSpace, key}
-*/
-func (self *Node) callDeleteData(clientSocket *rpc.Client, arg *ArgDeleteData) bool {
-	var reply bool
-	err := clientSocket.Call("DHTnode.DeleteData", arg, &reply)
-	if err != nil {
-		log.Fatal("remote DeleteData error on :", self.Ip, ":", self.Port, " ", err)
-	}
-	return reply
-}
-
-//Abstract callDeleteData method
-// nodeTarget is the node where rpc is computed
-func (nodeTarget *Node) deleteDataRemote(storageSpace string, key string) bool {
-
-	clientSocket := connect(nodeTarget.Ip, nodeTarget.Port)
-	arg := ArgDeleteData{storageSpace, key}
-	reply := nodeTarget.callDeleteData(clientSocket, &arg)
-	clientSocket.Close()
-	return reply
-}
-
-/*
-Abstract RPC for StoreData method
-@arg : ArgStoreData{ key, data, storageSpace}
-*/
-func (self *DHTnode) callStoreData(clientSocket *rpc.Client, arg *ArgStoreData) bool {
-	var reply bool
-	err := clientSocket.Call("DHTnode.StoreData", arg, &reply)
-	if err != nil {
-		log.Fatal("remote StoreData error on :", self.Ip, ":", self.Port, " ", err)
-	}
-	return reply
-}
-
-//Abstract callStoreData method
-// nodeTarget is the node where rpc is computed
-func (nodeTarget *DHTnode) storeDataRemote(key string, data string, storageSpace string) bool {
-
-	clientSocket := connect(nodeTarget.Ip, nodeTarget.Port)
-	arg := ArgStoreData{key, data, storageSpace}
-	reply := nodeTarget.callStoreData(clientSocket, &arg)
-	clientSocket.Close()
-	return reply
 }
 
 /*
@@ -517,3 +444,78 @@ func handleDeadNode(deadNode BasicNode) bool {
 		return false
 	}
 }
+
+//Code used in data management. Code which exist but dont compiled.
+///*
+//
+//
+//Abstract RPC for GetData method
+//@arg : ArgDeleteData{ storageSpace, key}
+//*/
+//func (self *DHTnode) callGetData(clientSocket *rpc.Client, arg *ArgGetData) string {
+//	var reply string
+//	err := clientSocket.Call("DHTnode.GetData", arg, &reply)
+//	if err != nil {
+//		log.Fatal("remote GetData error on :", self.Ip, ":", self.Port, " ", err)
+//	}
+//	return reply
+//}
+//
+////Abstract callGetData method
+//// nodeTarget is the node where rpc is computed
+//func (nodeTarget *DHTnode) getDataRemote(key string) string {
+//
+//	clientSocket := connect(nodeTarget.Ip, nodeTarget.Port)
+//	arg := ArgGetData{key}
+//	reply := nodeTarget.callGetData(clientSocket, &arg)
+//	clientSocket.Close()
+//	return reply
+//}
+//
+///*
+//Abstract RPC for DeleteData method
+//@arg : ArgDeleteData{ storageSpace, key}
+//*/
+//func (self *Node) callDeleteData(clientSocket *rpc.Client, arg *ArgDeleteData) bool {
+//	var reply bool
+//	err := clientSocket.Call("DHTnode.DeleteData", arg, &reply)
+//	if err != nil {
+//		log.Fatal("remote DeleteData error on :", self.Ip, ":", self.Port, " ", err)
+//	}
+//	return reply
+//}
+//
+////Abstract callDeleteData method
+//// nodeTarget is the node where rpc is computed
+//func (nodeTarget *Node) deleteDataRemote(storageSpace string, key string) bool {
+//
+//	clientSocket := connect(nodeTarget.Ip, nodeTarget.Port)
+//	arg := ArgDeleteData{storageSpace, key}
+//	reply := nodeTarget.callDeleteData(clientSocket, &arg)
+//	clientSocket.Close()
+//	return reply
+//}
+//
+///*
+//Abstract RPC for StoreData method
+//@arg : ArgStoreData{ key, data, storageSpace}
+//*/
+//func (self *DHTnode) callStoreData(clientSocket *rpc.Client, arg *ArgStoreData) bool {
+//	var reply bool
+//	err := clientSocket.Call("DHTnode.StoreData", arg, &reply)
+//	if err != nil {
+//		log.Fatal("remote StoreData error on :", self.Ip, ":", self.Port, " ", err)
+//	}
+//	return reply
+//}
+//
+////Abstract callStoreData method
+//// nodeTarget is the node where rpc is computed
+//func (nodeTarget *DHTnode) storeDataRemote(key string, data string, storageSpace string) bool {
+//
+//	clientSocket := connect(nodeTarget.Ip, nodeTarget.Port)
+//	arg := ArgStoreData{key, data, storageSpace}
+//	reply := nodeTarget.callStoreData(clientSocket, &arg)
+//	clientSocket.Close()
+//	return reply
+//}

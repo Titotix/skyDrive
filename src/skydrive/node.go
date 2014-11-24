@@ -53,7 +53,6 @@ func makeDHTNode(NodeIp string, NodePort string) DHTnode {
 Available for rpc
 @arg.FirstNode is the node which nodeAdded
 */
-//Work in progress
 func (self *DHTnode) join(joinedNode BasicNode) {
 	if isAlive(joinedNode) {
 		self.initFingerTable(joinedNode)
@@ -169,7 +168,6 @@ func (self *DHTnode) basicInit(joinedNode BasicNode) {
 func (self *DHTnode) updateOthers() {
 	var i int
 
-	m := 160
 	for i = 0; i < m; i++ {
 		//find last node p whose i finger might be self
 		lastFinger, _ := calcLastFinger(self.IdByte, i+1)

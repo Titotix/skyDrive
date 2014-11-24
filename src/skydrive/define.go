@@ -7,7 +7,6 @@ type BasicNode struct {
 	IdByte []byte
 }
 
-//I can delete pointer on succ et pred
 type Node struct {
 	BasicNode
 	Successor   BasicNode

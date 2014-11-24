@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/hex"
+	"fmt"
 	"log"
 	"net/rpc"
 )
@@ -59,6 +60,30 @@ type ArgDeleteData struct {
 
 type ArgGetData struct {
 	Key string
+}
+
+// Current node is going to connect to remote http server (@host, @port)
+func connect(host string, port string) *rpc.Client {
+	client, err := rpc.DialHTTP("tcp", host+":"+port)
+	if err != nil {
+		log.Fatal("dialing:", err)
+	}
+	return client
+}
+
+//Just an abstraction of method connect
+func connectToNode(nodeTarget BasicNode) *rpc.Client {
+	return connect(nodeTarget.Ip, nodeTarget.Port)
+}
+
+func isAlive(node BasicNode) bool {
+	client, err := rpc.DialHTTP("tcp", node.Ip+":"+node.Port)
+	if err != nil {
+		fmt.Println(err)
+		return false
+	}
+	client.Close()
+	return true
 }
 
 /*

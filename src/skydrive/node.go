@@ -96,7 +96,6 @@ func (self *DHTnode) join(joinedNode BasicNode) {
  Initalize Finger[] table for current node
 */
 func (self *DHTnode) initFingerTable(joinedNode BasicNode) {
-	//self.Fingers[0].key, _ = calcFingerSha(self.IdByte, 0)
 
 	//self.basicInit(joinedNode)
 	successor := joinedNode.findSuccessor(self.Fingers[0].key)

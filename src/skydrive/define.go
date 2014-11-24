@@ -1,0 +1,27 @@
+package main
+
+type BasicNode struct {
+	Id     string
+	Ip     string
+	Port   string
+	IdByte []byte
+}
+
+//I can delete pointer on succ et pred
+type Node struct {
+	BasicNode
+	Successor   BasicNode
+	Predecessor BasicNode
+}
+
+type DHTnode struct {
+	Node
+	Fingers []*Finger
+}
+
+type Finger struct {
+	Node
+	number  int
+	key     string
+	keyByte []byte
+}

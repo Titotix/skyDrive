@@ -381,8 +381,6 @@ func handleDeadNode(deadNode BasicNode) bool {
 //	storageSpace string
 //}
 //
-//type ArgEmpty struct{}
-//
 //
 //type ArgStoreData struct {
 //	Key          string

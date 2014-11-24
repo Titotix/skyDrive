@@ -62,8 +62,7 @@ func (self *BasicNode) print() {
 }
 
 func (self *Node) print() {
-	fmt.Println("Id :" + self.Id)
-	self.BasicNode.printIdByte()
+	fmt.Println(" * Id : " + self.Id)
 	fmt.Printf(" * Successor :\n")
 	self.Successor.print()
 	fmt.Printf(" * Predecessor :\n")
@@ -71,8 +70,7 @@ func (self *Node) print() {
 }
 
 func (self *Finger) print() {
-	fmt.Println("finger key:" + self.key)
-	printIdByte(self.keyByte)
+	fmt.Println("finger key: \"" + self.key + "\"")
 	self.Node.print()
 }
 

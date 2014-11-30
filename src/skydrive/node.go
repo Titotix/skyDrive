@@ -77,6 +77,7 @@ func (self *DHTnode) join(joinedNode BasicNode) {
 /*
  Initalize Finger[] table for current node
 */
+//TODO IMPROVE
 func (self *DHTnode) initFingerTable(joinedNode BasicNode) {
 
 	//self.basicInit(joinedNode)
@@ -97,6 +98,7 @@ func (self *DHTnode) initFingerTable(joinedNode BasicNode) {
 		} else {
 			//otherwise, ask to joinedNOde the successor of finger key i+1
 			self.Fingers[i+1].Node = joinedNode.findSuccessor(self.Fingers[i+1].key)
+			//TODO involve joinedNode of the new node before to ask him anything...
 			//But if the answer is between self and joinedNode AND finger 's key asked is between joinedNode and self
 			//in this case, joinedNode doesn't know yet self so he is going to  answer wrong
 			if (between(self.IdByte, joinedNode.IdByte, self.Fingers[i+1].IdByte) || self.Fingers[i+1].Id == joinedNode.Id) && between(joinedNode.IdByte, self.IdByte, (self.Fingers[i+1].keyByte)) {
@@ -108,6 +110,7 @@ func (self *DHTnode) initFingerTable(joinedNode BasicNode) {
 	self.initFingerSuccessor(joinedNode)
 }
 
+//TODO HORRIBLE STUFF
 func (self *DHTnode) initFingerSuccessor(joinedNode BasicNode) {
 	for i := 0; i < m; i++ {
 		//If finger i point to self node, assign self succcessor to finger successor
@@ -153,6 +156,7 @@ func (self *DHTnode) initFingerSuccessor(joinedNode BasicNode) {
 }
 
 //Iniatize successor, predeccessor and finger 1 of new node in ring
+//USELESS
 func (self *DHTnode) basicInit(joinedNode BasicNode) {
 
 	//Let's look for responsible node for the first finger
@@ -212,6 +216,32 @@ func (self *DHTnode) UpdateFingerTable(arg *ArgUpdateFingerTable, reply *Node) e
 		}
 	}
 
+	return nil
+}
+
+//Update finger table of the current node with the node provided in argument
+// Will basically try to put arg.Node in its finger table where it fits
+func (self *DHTnode) UpdateFinger(arg *ArgUpdateFinger, reply *Node) error {
+
+	argIdByte, err := hex.DecodeString(arg.Node.Id)
+	if err != nil {
+		log.Fatal("err DecodeString in UpdateFingerTable :", err)
+	}
+
+	var i int
+	i = 0
+	var done bool
+	done = false
+	for i < m || done {
+		//Update finger with arg.Node  only if finger key is between self and arg.Node
+		if inside(self.IdByte, argIdByte, self.Fingers[i].keyByte) {
+			if between(self.IdByte, self.Fingers[i].IdByte, arg.Node.IdByte) {
+				self.Fingers[i].Node = arg.Node
+				done = true
+			}
+		}
+		i++
+	}
 	return nil
 }
 

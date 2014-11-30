@@ -39,6 +39,10 @@ type ArgUpdateFingerTable struct {
 	I    int
 }
 
+type ArgUpdateFinger struct {
+	Node Node
+}
+
 type ArgFirstUpdate struct {
 	secondNode Node
 }

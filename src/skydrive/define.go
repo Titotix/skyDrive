@@ -39,7 +39,7 @@ type ArgUpdateFingerTable struct {
 	I    int
 }
 
-type ArgUpdateFinger struct {
+type ArgAddToFingerTable struct {
 	Node Node
 }
 

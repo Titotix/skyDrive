@@ -32,7 +32,7 @@ func distance(a, b []byte, bits int) *big.Int {
 	return &dist
 }
 
-//True if key is in [id1, id2)
+//True if key is in [id1, id2[
 func between(id1, id2, key []byte) bool {
 	// 0 if a==b, -1 if a < b, and +1 if a > b
 
@@ -55,7 +55,7 @@ func between(id1, id2, key []byte) bool {
 	}
 }
 
-// True if key is in (id1, id2]
+// True if key is in ]id1, id2]
 func between2(id1, id2, key []byte) bool {
 	// 0 if a==b, -1 if a < b, and +1 if a > b
 

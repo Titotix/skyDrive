@@ -67,6 +67,41 @@ func (nodeTarget *BasicNode) updateFingerTable(s Node, i int) {
 	}
 }
 
+func callAddToFingerTable(clientSocket *rpc.Client, nodeTarget BasicNode, arg *ArgAddToFingerTable) {
+	var reply Node
+	err := clientSocket.Call("DHTnode.AddToFingerTable", arg, &reply)
+	if err != nil {
+		if false == handleDeadNode(nodeTarget) {
+			log.Fatal("remote addToFingerTable error:", err)
+		} else {
+			//The node is dead, happy predecessor deadNode !
+			//deadPred := thisNode.findPredecessor(nodeTarget.Id)
+			//if deadPred.Id == nodeTarget.Id {
+			//	log.Fatal("Shit happens")
+			//} else {
+			//	deadPred.updateFingerTable(arg.Node, arg.I)
+			//}
+		}
+	}
+}
+
+func (nodeTarget *BasicNode) addToFingerTable(newNode Node) {
+
+	arg := new(ArgAddToFingerTable)
+	arg.Node = newNode
+	if nodeTarget.Id == thisNode.Id {
+		// execute in local
+		//fmt.Println("exec in local")
+		//reply := new(Node)
+		//_ = thisNode.UpdateFingerTable(arg, reply)
+		log.Fatal("AddToFingerTable himself")
+	} else {
+		clientSocket := connect(nodeTarget.Ip, nodeTarget.Port)
+		callAddToFingerTable(clientSocket, *nodeTarget, arg)
+		clientSocket.Close()
+	}
+}
+
 func callGetPredecessor(clientSocket *rpc.Client, nodeTarget BasicNode, arg *ArgEmpty) BasicNode {
 	var reply BasicNode
 	err := clientSocket.Call("DHTnode.GetPredecessor", arg, &reply)
@@ -146,7 +181,7 @@ func callUpdateFingerFromDeadOne(clientSocket *rpc.Client, nodeTarget BasicNode,
 	err := clientSocket.Call("DHTnode.UpdateFingerFromDeadOne", arg, &reply)
 	if err != nil {
 		if false == handleDeadNode(nodeTarget) {
-			log.Fatal("remote updateFingerTable error:", err)
+			log.Fatal("remote updateFingerFromDeadOne error:", err)
 		} else {
 			deadPred := thisNode.findPredecessor(nodeTarget.Id)
 			if deadPred.Id == nodeTarget.Id {
@@ -178,7 +213,7 @@ func callUpdateFingerTableFirstNode(clientSocket *rpc.Client, nodeTarget BasicNo
 	err := clientSocket.Call("DHTnode.UpdateFingerTableFirstNode", arg, &reply)
 	if err != nil {
 		if false == handleDeadNode(nodeTarget) {
-			log.Fatal("remote updateFingerTable error:", err)
+			log.Fatal("remote updateFingerTableFirstNode error:", err)
 		} else {
 			deadPred := thisNode.findPredecessor(nodeTarget.Id)
 			if deadPred.Id == nodeTarget.Id {
@@ -211,7 +246,7 @@ func callFindSuccessor(clientSocket *rpc.Client, nodeTarget BasicNode, arg *ArgL
 	err := clientSocket.Call("DHTnode.FindSuccessor", arg, &reply)
 	if err != nil {
 		if false == handleDeadNode(nodeTarget) {
-			log.Fatal("remote updateFingerTable error:", err)
+			log.Fatal("remote findSuccessor error:", err)
 		} else {
 			deadPred := thisNode.findPredecessor(nodeTarget.Id)
 			if deadPred.Id == nodeTarget.Id {
@@ -251,7 +286,7 @@ func callFindPredecessor(clientSocket *rpc.Client, nodeTarget BasicNode, arg *Ar
 	err := clientSocket.Call("DHTnode.FindPredecessor", arg, &reply)
 	if err != nil {
 		if false == handleDeadNode(nodeTarget) {
-			log.Fatal("remote updateFingerTable error:", err)
+			log.Fatal("remote findPredecessor error:", err)
 		} else {
 			deadPred := thisNode.findPredecessor(nodeTarget.Id)
 			if deadPred.Id == nodeTarget.Id {
